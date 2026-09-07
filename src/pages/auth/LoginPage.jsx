@@ -52,7 +52,6 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [otpCaptchaToken, setOtpCaptchaToken] = useState('');
   const [otpCaptchaError, setOtpCaptchaError] = useState('');
-  const [devOtp, setDevOtp] = useState(null);
   const otpTurnstileRef = useRef(null);
 
   // Countdown timer for OTP resend
@@ -145,17 +144,6 @@ export default function LoginPage() {
         setVerificationId(res.verificationId);
         setOtpSent(true);
         setCountdown(45);
-        
-        const code = (otpChannel === 'email' ? res.devOtp?.email : res.devOtp?.phone) || res.otp || '123456';
-        if (res.devOtp) {
-          setDevOtp(res.devOtp);
-        } else {
-          setDevOtp({ phone: code, email: code });
-        }
-        
-        toast.info(`🔑 Test Mode OTP: [ ${code} ] (Click Auto-Fill or type it)`, {
-          duration: 15000,
-        });
 
         toast.success(`🔐 Security OTP dispatched to your ${otpChannel === 'email' ? 'Email' : 'Mobile Number'}!`);
       }
@@ -441,40 +429,10 @@ export default function LoginPage() {
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyOTP}>
-                      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: 12, marginBottom: 16 }}>
                         <p style={{ fontSize: '0.8125rem', color: '#166534', margin: 0, lineHeight: 1.4 }}>
                           Security code sent to <strong>{otpTarget}</strong>.
                         </p>
-                      </div>
-
-                      {/* Development / Test Mode OTP Display & Quick-Fill Card */}
-                      <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '10px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '0.72rem', color: '#1E40AF', fontWeight: 600 }}>⚡ Test Mode OTP:</div>
-                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.12em' }}>
-                            {(otpChannel === 'email' ? devOtp?.email : devOtp?.phone) || '123456'}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const val = (otpChannel === 'email' ? devOtp?.email : devOtp?.phone) || '123456';
-                            setOtpCode(val);
-                            toast.success('⚡ Auto-filled Test OTP!');
-                          }}
-                          style={{
-                            background: '#2563EB',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 6,
-                            padding: '6px 12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Auto-Fill OTP ⚡
-                        </button>
                       </div>
 
                       <div style={{ marginBottom: 16 }}>

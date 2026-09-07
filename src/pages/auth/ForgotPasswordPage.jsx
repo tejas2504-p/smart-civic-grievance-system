@@ -32,7 +32,6 @@ export default function ForgotPasswordPage() {
   // CAPTCHA State
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaError, setCaptchaError] = useState('');
-  const [devOtp, setDevOtp] = useState(null);
   const turnstileRef = useRef(null);
 
   // Countdown timer for OTP resend
@@ -84,17 +83,6 @@ export default function ForgotPasswordPage() {
         setVerificationId(res.verificationId);
         setStep(2);
         setCountdown(45);
-        
-        const code = (channel === 'email' ? res.devOtp?.email : res.devOtp?.phone) || res.otp || '123456';
-        if (res.devOtp) {
-          setDevOtp(res.devOtp);
-        } else {
-          setDevOtp({ phone: code, email: code });
-        }
-
-        toast.info(`🔑 Test Mode Reset OTP: [ ${code} ] (Click Auto-Fill or type it)`, {
-          duration: 15000,
-        });
 
         toast.success(`Password reset OTP dispatched to your ${channel === 'email' ? 'Email' : 'Mobile Number'}!`);
       }
@@ -272,40 +260,10 @@ export default function ForgotPasswordPage() {
               {/* STEP 2: ENTER OTP & NEW PASSWORD */}
               {step === 2 && (
                 <form onSubmit={handleResetPassword}>
-                  <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: 12, marginBottom: 16 }}>
                     <p style={{ fontSize: '0.8125rem', color: '#166534', margin: 0, lineHeight: 1.4 }}>
                       Security code sent to <strong>{target}</strong>. Enter the 6-digit OTP below:
                     </p>
-                  </div>
-
-                  {/* Development / Test Mode OTP Display & Quick-Fill Card */}
-                  <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '10px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: '#1E40AF', fontWeight: 600 }}>⚡ Test Mode Reset OTP:</div>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.12em' }}>
-                        {(channel === 'email' ? devOtp?.email : devOtp?.phone) || '123456'}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const val = (channel === 'email' ? devOtp?.email : devOtp?.phone) || '123456';
-                        setOtpCode(val);
-                        toast.success('⚡ Auto-filled Test OTP!');
-                      }}
-                      style={{
-                        background: '#2563EB',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '6px 12px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Auto-Fill OTP ⚡
-                    </button>
                   </div>
 
                   <div style={{ marginBottom: 16 }}>

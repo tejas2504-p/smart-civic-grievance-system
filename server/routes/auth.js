@@ -135,18 +135,7 @@ export function createAuthRouter(io) {
       const smsOk = smsResult.status === 'fulfilled' && smsResult.value?.success;
       const emailOk = emailResult.status === 'fulfilled' && emailResult.value?.success;
 
-      const isDev = process.env.NODE_ENV !== 'production' || !process.env.TWILIO_ACCOUNT_SID;
-      if (isDev) {
-        console.log(`
-  ╔═══════════════════════════════════════════════════════════════╗
-  ║ 🔐 [DEVELOPMENT OTP CODES GENERATED]                          ║
-  ║ 📱 Phone (${formattedPhone}): ${phoneOtp}                     ║
-  ║ 📧 Email (${normalizedEmail}): ${emailOtp}                    ║
-  ╚═══════════════════════════════════════════════════════════════╝
-        `);
-      }
-
-      // 11. Emit Socket.IO Event
+      // 11. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
       emitSocketEvent('OTP_SENT', {
         verificationId,
         phoneMasked: maskPhone(formattedPhone),
@@ -155,7 +144,7 @@ export function createAuthRouter(io) {
         timestamp: Date.now(),
       });
 
-      // 12. Return success response with dev OTP in development/testing mode
+      // 12. Return generic success response (NO OTP IN RESPONSE)
       return res.status(200).json({
         success: true,
         message: 'Verification OTP sent successfully to your phone and email address.',
@@ -167,8 +156,6 @@ export function createAuthRouter(io) {
           sms: smsOk ? 'delivered' : 'queued',
           email: emailOk ? 'delivered' : 'queued',
         },
-        devOtp: isDev ? { phone: phoneOtp, email: emailOtp } : undefined,
-        otp: isDev ? phoneOtp : undefined,
       });
     } catch (error) {
       console.error('❌ [Send OTP Error]:', error.message);
@@ -221,9 +208,8 @@ export function createAuthRouter(io) {
         });
       }
 
-      // Verify OTP Hash (or dev bypass code in development mode)
-      const isDev = process.env.NODE_ENV !== 'production' || !process.env.TWILIO_ACCOUNT_SID;
-      const isValid = verifyOTPHash(cleanOtp, session.phoneOtpHash) || (isDev && cleanOtp === '123456');
+      // Verify OTP Hash securely (timing-safe comparison against HMAC-SHA256 hash)
+      const isValid = verifyOTPHash(cleanOtp, session.phoneOtpHash);
 
       if (!isValid) {
         session.phoneAttempts += 1;
@@ -246,7 +232,7 @@ export function createAuthRouter(io) {
       session.phoneVerified = true;
       await session.save();
 
-      // Emit Socket.IO Event
+      // Emit Safe Socket.IO Event
       emitSocketEvent('PHONE_VERIFIED', {
         verificationId,
         phoneVerified: true,
@@ -318,9 +304,8 @@ export function createAuthRouter(io) {
         });
       }
 
-      // Verify OTP Hash (or dev bypass code in development mode)
-      const isDev = process.env.NODE_ENV !== 'production' || !process.env.TWILIO_ACCOUNT_SID;
-      const isValid = verifyOTPHash(cleanOtp, session.emailOtpHash) || (isDev && cleanOtp === '123456');
+      // Verify OTP Hash securely (timing-safe comparison against HMAC-SHA256 hash)
+      const isValid = verifyOTPHash(cleanOtp, session.emailOtpHash);
 
       if (!isValid) {
         session.emailAttempts += 1;
@@ -343,7 +328,7 @@ export function createAuthRouter(io) {
       session.emailVerified = true;
       await session.save();
 
-      // Emit Socket.IO Event
+      // Emit Safe Socket.IO Event
       emitSocketEvent('EMAIL_VERIFIED', {
         verificationId,
         phoneVerified: session.phoneVerified,
@@ -409,7 +394,7 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 3. Generate fresh OTPs
+      // 3. Generate fresh cryptographically secure OTPs
       const newPhoneOtp = generateSecureOTP();
       const newEmailOtp = generateSecureOTP();
 
@@ -431,18 +416,7 @@ export function createAuthRouter(io) {
         sendEmailOTP(session.email, newEmailOtp);
       }
 
-      const isDev = process.env.NODE_ENV !== 'production' || !process.env.TWILIO_ACCOUNT_SID;
-      if (isDev) {
-        console.log(`
-  ╔═══════════════════════════════════════════════════════════════╗
-  ║ 🔄 [DEVELOPMENT OTP CODES RESENT]                             ║
-  ║ 📱 Phone (${session.phoneNumber}): ${newPhoneOtp}             ║
-  ║ 📧 Email (${session.email}): ${newEmailOtp}                   ║
-  ╚═══════════════════════════════════════════════════════════════╝
-        `);
-      }
-
-      // 5. Emit Socket.IO Event
+      // 5. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
       emitSocketEvent('OTP_RESENT', {
         verificationId,
         channel,
@@ -455,8 +429,6 @@ export function createAuthRouter(io) {
         message: 'New verification OTP sent successfully.',
         expiresIn: 300,
         resendsRemaining: 3 - session.resendCount,
-        devOtp: isDev ? { phone: newPhoneOtp, email: newEmailOtp } : undefined,
-        otp: isDev ? (channel === 'email' ? newEmailOtp : newPhoneOtp) : undefined,
       });
     } catch (error) {
       console.error('❌ [Resend OTP Error]:', error.message);

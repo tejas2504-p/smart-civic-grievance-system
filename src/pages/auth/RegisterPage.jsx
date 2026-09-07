@@ -78,7 +78,6 @@ export default function RegisterPage() {
   const [resending, setResending] = useState(false);
   const [phoneAttemptsLeft, setPhoneAttemptsLeft] = useState(5);
   const [emailAttemptsLeft, setEmailAttemptsLeft] = useState(5);
-  const [devOtp, setDevOtp] = useState(null);
 
   // CAPTCHA State
   const [captchaToken, setCaptchaToken] = useState('');
@@ -203,15 +202,6 @@ export default function RegisterPage() {
         setExpiresIn(res.expiresIn || 300);
         setResendCooldown(45);
         setStep(2);
-        
-        if (res.devOtp) {
-          setDevOtp(res.devOtp);
-          toast.info(`🔑 Test Mode OTPs:\nPhone: [ ${res.devOtp.phone} ] | Email: [ ${res.devOtp.email} ]`, {
-            duration: 15000,
-          });
-        } else {
-          setDevOtp({ phone: '123456', email: '123456' });
-        }
 
         toast.success('Verification OTP dispatched!', {
           description: `SMS sent to ${res.phoneMasked || phone} and Email sent to ${res.emailMasked || email}.`,
@@ -316,12 +306,6 @@ export default function RegisterPage() {
         setResendCooldown(45);
         setPhoneOtp('');
         setEmailOtp('');
-        if (res.devOtp) {
-          setDevOtp(res.devOtp);
-          toast.info(`🔑 Fresh Test OTPs:\nPhone: [ ${res.devOtp.phone} ] | Email: [ ${res.devOtp.email} ]`, {
-            duration: 15000,
-          });
-        }
         if (res.resendsRemaining !== undefined) {
           setResendsRemaining(res.resendsRemaining);
         }
@@ -332,14 +316,6 @@ export default function RegisterPage() {
     } finally {
       setResending(false);
     }
-  };
-
-  const handleAutoFillBoth = () => {
-    const p = devOtp?.phone || '123456';
-    const e = devOtp?.email || '123456';
-    setPhoneOtp(p);
-    setEmailOtp(e);
-    toast.success('⚡ Auto-filled Test OTPs!');
   };
 
   // 5. Final Registration Submission
@@ -553,53 +529,6 @@ export default function RegisterPage() {
                           <li>Phone SMS: <strong>{maskedPhone}</strong></li>
                           <li>Email Inbox: <strong>{maskedEmail}</strong></li>
                         </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Development / Test Mode OTP Display & Quick-Fill Card */}
-                  <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, padding: 14, marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 750, color: '#1E40AF', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>⚡ Test / Development Mode OTPs:</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleAutoFillBoth}
-                        style={{
-                          background: '#2563EB',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '4px 10px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Auto-Fill Both OTPs ⚡
-                      </button>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: '0.75rem' }}>
-                      <div
-                        onClick={() => { setPhoneOtp(devOtp?.phone || '123456'); toast.success('Phone OTP copied to field!'); }}
-                        style={{ background: '#DBEAFE', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', border: '1px dashed #93C5FD' }}
-                        title="Click to copy Phone OTP"
-                      >
-                        <div style={{ color: '#1E3A8A', fontWeight: 600 }}>Phone OTP:</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.1em' }}>
-                          {devOtp?.phone || '123456'}
-                        </div>
-                      </div>
-                      <div
-                        onClick={() => { setEmailOtp(devOtp?.email || '123456'); toast.success('Email OTP copied to field!'); }}
-                        style={{ background: '#DBEAFE', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', border: '1px dashed #93C5FD' }}
-                        title="Click to copy Email OTP"
-                      >
-                        <div style={{ color: '#1E3A8A', fontWeight: 600 }}>Email OTP:</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.1em' }}>
-                          {devOtp?.email || '123456'}
-                        </div>
                       </div>
                     </div>
                   </div>
