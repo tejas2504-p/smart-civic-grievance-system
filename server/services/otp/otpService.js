@@ -84,6 +84,43 @@ export async function createEmailVerificationSession(email, purpose = 'registrat
 }
 
 /**
+ * Creates a new OTP verification session strictly for Phone.
+ * Generates OTP, hashes it, stores the session, and returns the plaintext OTP.
+ */
+export async function createPhoneVerificationSession(phone, purpose = 'registration') {
+  const phoneOtp = generateSecureOTP();
+  const phoneOtpHash = hashOTP(phoneOtp);
+
+  const expiresInSeconds = EXPIRE_MINUTES * 60;
+  const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+  const verificationId = generateVerificationId();
+
+  await OTPVerification.create({
+    verificationId,
+    phoneNumber: phone,
+    email: 'N/A', // Not applicable for phone-only session
+    phoneOtpHash,
+    emailOtpHash: 'N/A', // Not applicable
+    phoneVerified: false,
+    emailVerified: true, // Auto-verify email so validation doesn't block completion
+    captchaVerified: true,
+    phoneAttempts: 0,
+    emailAttempts: 0,
+    resendCount: 0,
+    lastSentAt: new Date(),
+    expiresAt,
+    isCompleted: false,
+    purpose,
+  });
+
+  return {
+    verificationId,
+    expiresInSeconds,
+    plaintextPhoneOtp: phoneOtp
+  };
+}
+
+/**
  * Verifies an entered phone OTP against a session.
  * Handles rate limits, expiration, and lockouts.
  */

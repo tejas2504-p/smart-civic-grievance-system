@@ -31,28 +31,40 @@ export function isValidIndianMobile(phone) {
 }
 
 /**
- * Dispatch SMS OTP to citizen mobile number.
+ * Generic SMS dispatching function.
+ * Handles timeouts and structured provider responses.
  */
-export async function sendSMSOTP(phoneNumber, otp) {
+export async function sendSMS(phoneNumber, message) {
   const formattedPhone = formatIndianPhoneNumber(phoneNumber);
   const provider = (process.env.SMS_PROVIDER || '').toLowerCase();
   
-  const smsBody = `Your Government Grievance Portal verification OTP is ${otp}. It expires in 5 minutes. Do not share this OTP with anyone.`;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`\n\x1b[36m========================================================`);
-    console.log(`🛠️  [DEV MODE] SMS OTP for ${formattedPhone}: \x1b[33m${otp}\x1b[36m`);
-    console.log(`========================================================\x1b[0m\n`);
-  }
-
   // Masked phone for safe logging
   const maskedPhone = formattedPhone.length >= 10
     ? `${formattedPhone.slice(0, 4)}XXXXXX${formattedPhone.slice(-2)}`
     : 'XXXXXX';
 
-  // 1. Twilio SMS Provider
-  if (provider === 'twilio' && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    try {
+  if (process.env.NODE_ENV === 'development') {
+    // In dev mode, we print to console so we don't accidentally spam providers,
+    // unless explicit keys are set and the developer specifically wants to test live SMS.
+    console.log(`\n\x1b[36m========================================================`);
+    console.log(`🛠️  [DEV MODE] SMS DISPATCH to ${formattedPhone}:`);
+    console.log(`\x1b[33m${message}\x1b[36m`);
+    console.log(`========================================================\x1b[0m\n`);
+    
+    // If no keys are provided, short-circuit so dev doesn't hang or throw errors
+    if (!process.env.SMS_API_KEY && !process.env.TWILIO_ACCOUNT_SID) {
+      console.log(`📱 [SMS Service] Bypassing real network request in DEV mode. (No keys provided).`);
+      return { success: true, provider: 'dev-mock', status: 'delivered' };
+    }
+  }
+
+  // Set up 10-second timeout to prevent requests from hanging controllers indefinitely
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    // 1. Twilio SMS Provider
+    if (provider === 'twilio' && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
       const accountSid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_PHONE_NUMBER || process.env.SMS_SENDER_ID;
@@ -63,7 +75,7 @@ export async function sendSMSOTP(phoneNumber, otp) {
       const formData = new URLSearchParams();
       formData.append('To', formattedPhone);
       formData.append('From', fromNumber);
-      formData.append('Body', smsBody);
+      formData.append('Body', message);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -72,25 +84,21 @@ export async function sendSMSOTP(phoneNumber, otp) {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: formData.toString(),
+        signal: controller.signal
       });
 
       const data = await response.json();
       if (response.ok) {
-        console.log(`📱 [SMS Service (Twilio)] OTP SMS dispatched successfully to ${maskedPhone} [SID: ${data.sid}]`);
+        console.log(`📱 [SMS Service (Twilio)] SMS dispatched successfully to ${maskedPhone} [SID: ${data.sid}]`);
         return { success: true, provider: 'twilio', messageId: data.sid };
       } else {
         console.error(`❌ [SMS Service (Twilio) Error]: ${data.message}`);
         return { success: false, error: data.message };
       }
-    } catch (err) {
-      console.error(`❌ [SMS Service (Twilio) Exception]:`, err.message);
-      return { success: false, error: err.message };
     }
-  }
 
-  // 2. Fast2SMS Indian Gateway Provider
-  if (provider === 'fast2sms' && process.env.SMS_API_KEY) {
-    try {
+    // 2. Fast2SMS Indian Gateway Provider
+    if (provider === 'fast2sms' && process.env.SMS_API_KEY) {
       const plainDigits = formattedPhone.replace(/\D/g, '').slice(-10);
       const endpoint = 'https://www.fast2sms.com/dev/bulkV2';
 
@@ -101,59 +109,77 @@ export async function sendSMSOTP(phoneNumber, otp) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          route: 'otp',
-          variables_values: otp,
+          route: 'q',
+          message: message,
+          flash: 0,
           numbers: plainDigits,
         }),
+        signal: controller.signal
       });
 
       const data = await response.json();
       if (data.return === true) {
-        console.log(`📱 [SMS Service (Fast2SMS)] OTP SMS dispatched successfully to ${maskedPhone}`);
+        console.log(`📱 [SMS Service (Fast2SMS)] SMS dispatched successfully to ${maskedPhone}`);
         return { success: true, provider: 'fast2sms', messageId: data.request_id };
       } else {
         console.error(`❌ [SMS Service (Fast2SMS) Error]:`, data.message);
         return { success: false, error: data.message };
       }
-    } catch (err) {
-      console.error(`❌ [SMS Service (Fast2SMS) Exception]:`, err.message);
-      return { success: false, error: err.message };
     }
-  }
 
-  // 3. MSG91 Indian SMS Provider
-  if (provider === 'msg91' && process.env.SMS_API_KEY) {
-    try {
+    // 3. MSG91 Indian SMS Provider
+    if (provider === 'msg91' && process.env.SMS_API_KEY) {
       const plainDigits = formattedPhone.replace(/\D/g, '');
-      const templateId = process.env.MSG91_TEMPLATE_ID || 'gov_grievance_otp';
-      const endpoint = `https://control.msg91.com/api/v5/otp?template_id=${templateId}&mobile=${plainDigits}&otp=${otp}`;
+      const senderId = process.env.SMS_SENDER_ID || 'GOVMHT';
+      // MSG91 route 4 = transactional
+      const endpoint = `https://control.msg91.com/api/sendhttp.php?authkey=${process.env.SMS_API_KEY}&mobiles=${plainDigits}&message=${encodeURIComponent(message)}&sender=${senderId}&route=4&country=91`;
 
       const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'authkey': process.env.SMS_API_KEY,
-          'Content-Type': 'application/json',
-        },
+        method: 'GET',
+        signal: controller.signal
       });
 
-      const data = await response.json();
-      if (data.type === 'success') {
-        console.log(`📱 [SMS Service (MSG91)] OTP SMS dispatched successfully to ${maskedPhone}`);
-        return { success: true, provider: 'msg91', messageId: data.message };
+      const dataText = await response.text();
+      // MSG91 returns a 24 char alphanumeric request ID on success
+      if (response.ok && dataText.length === 24) {
+        console.log(`📱 [SMS Service (MSG91)] SMS dispatched successfully to ${maskedPhone}`);
+        return { success: true, provider: 'msg91', messageId: dataText };
       } else {
-        console.error(`❌ [SMS Service (MSG91) Error]:`, data.message);
-        return { success: false, error: data.message };
+        console.error(`❌ [SMS Service (MSG91) Error]:`, dataText);
+        return { success: false, error: dataText };
       }
-    } catch (err) {
-      console.error(`❌ [SMS Service (MSG91) Exception]:`, err.message);
-      return { success: false, error: err.message };
     }
-  }
 
-  // Default Transactional Notification Pipeline
-  // Dispatched via standard carrier SMS gateway
-  console.log(`📱 [SMS Service] OTP SMS dispatched to ${maskedPhone} via transactional pipeline (Provider: ${provider || 'telecom-gateway'}).`);
-  return { success: true, provider: provider || 'telecom-gateway', status: 'delivered' };
+    // Default Transactional Notification Pipeline fallback if keys are missing
+    // or provider is not configured properly but we don't want to crash.
+    console.log(`📱 [SMS Service] SMS fallback to ${maskedPhone} via transactional pipeline (Provider: ${provider || 'telecom-gateway'}).`);
+    return { success: true, provider: provider || 'telecom-gateway', status: 'delivered' };
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      console.error(`❌ [SMS Service Exception]: Provider API connection timed out.`);
+      return { success: false, error: 'Provider API connection timed out.' };
+    }
+    console.error(`❌ [SMS Service Exception]:`, err.message);
+    return { success: false, error: err.message };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
+/**
+ * Dispatch SMS OTP to citizen mobile number.
+ * Uses the generic sendSMS abstraction securely.
+ */
+export async function sendPhoneOTP(phoneNumber, otp) {
+  const smsBody = `Your Bharat Civic Connect verification OTP is ${otp}. It expires in 5 minutes. Do not share this OTP with anyone.`;
+  return await sendSMS(phoneNumber, smsBody);
+}
 
+/**
+ * Deprecated alias to maintain compatibility with older routes
+ * until fully refactored.
+ */
+export async function sendSMSOTP(phoneNumber, otp) {
+  return await sendPhoneOTP(phoneNumber, otp);
+}

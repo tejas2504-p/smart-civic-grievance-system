@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import OTPVerification from '../models/OTPVerification.js';
 import { protect } from '../middleware/auth.js';
-import { createVerificationSession, createEmailVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
+import { createVerificationSession, createEmailVerificationSession, createPhoneVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
 import { verifyCaptcha } from '../services/captcha/captchaService.js';
 import { sendSMSOTP, formatIndianPhoneNumber, isValidIndianMobile } from '../services/sms/smsService.js';
 import { sendEmailOTP } from '../services/email/emailService.js';
@@ -214,6 +214,90 @@ export function createAuthRouter(io) {
   });
 
   /**
+   * @route   POST /api/auth/send-phone-otp
+   * @desc    Generate cryptographically secure OTP for Phone only, store hash in MongoDB, and dispatch SMS
+   * @access  Public (Rate-limited, CAPTCHA protected)
+   */
+  router.post('/send-phone-otp', sendOtpLimiter, async (req, res) => {
+    try {
+      const { phone, captchaToken, purpose = 'registration' } = req.body;
+
+      // 1. Validate Phone
+      if (!phone) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid phone number.',
+        });
+      }
+
+      if (!isValidIndianMobile(phone)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a valid 10-digit Indian mobile number.',
+        });
+      }
+
+      const formattedPhone = formatIndianPhoneNumber(phone);
+
+      // 2. Prevent duplicate account registration
+      if (purpose === 'registration') {
+        const existingUser = await User.findOne({
+          $or: [{ phone: formattedPhone }, { phone: phone.replace(/\D/g, '') }],
+        });
+        if (existingUser) {
+          return res.status(400).json({
+            success: false,
+            message: 'An account with this phone number already exists.',
+          });
+        }
+      }
+
+      // 3. Server-Side CAPTCHA Verification
+      if (captchaToken) {
+        const captchaResult = await verifyCaptcha(captchaToken, req.ip);
+        if (!captchaResult.success) {
+          return res.status(400).json({
+            success: false,
+            message: captchaResult.message || 'Human verification (CAPTCHA) failed. Please try again.',
+          });
+        }
+      }
+
+      // 4. Generate secure OTPs and store session via OTP Service
+      const sessionData = await createPhoneVerificationSession(formattedPhone, purpose);
+      const { verificationId, expiresInSeconds, plaintextPhoneOtp } = sessionData;
+
+      // 5. Dispatch real SMS OTP via Provider (Twilio/Fast2SMS/MSG91)
+      const smsResult = await Promise.allSettled([sendSMSOTP(formattedPhone, plaintextPhoneOtp)]);
+      
+      const smsOk = smsResult[0].status === 'fulfilled' && smsResult[0].value?.success;
+
+      // 6. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
+      emitSocketEvent('PHONE_OTP_SENT', {
+        verificationId,
+        phoneMasked: maskPhone(formattedPhone),
+        expiresIn: expiresInSeconds,
+        timestamp: Date.now(),
+      });
+
+      // 7. Return generic success response (NO OTP IN RESPONSE)
+      return res.status(200).json({
+        success: true,
+        message: 'Verification OTP sent successfully to your phone number.',
+        verificationId,
+        expiresIn: expiresInSeconds,
+        phoneMasked: maskPhone(formattedPhone),
+        deliveryStatus: {
+          sms: smsOk ? 'delivered' : 'queued',
+        },
+      });
+    } catch (error) {
+      console.error('❌ [Send Phone OTP Error]:', error.message);
+      return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+    }
+  });
+
+  /**
    * @route   POST /api/auth/verify-phone-otp
    * @desc    Verify Phone OTP hash, enforce attempt limit and expiry
    * @access  Public (Rate-limited)
@@ -263,10 +347,10 @@ export function createAuthRouter(io) {
       emitSocketEvent('PHONE_VERIFIED', {
         verificationId,
         phoneVerified: true,
-        emailVerified: session.emailVerified,
+        emailVerified: verificationResult.emailVerified,
       });
 
-      if (session.emailVerified) {
+      if (verificationResult.emailVerified) {
         emitSocketEvent('VERIFICATION_COMPLETED', {
           verificationId,
           status: 'ready_for_registration',
@@ -277,8 +361,8 @@ export function createAuthRouter(io) {
         success: true,
         message: 'Phone number verified successfully.',
         phoneVerified: true,
-        emailVerified: session.emailVerified,
-        verificationCompleted: session.emailVerified,
+        emailVerified: verificationResult.emailVerified,
+        verificationCompleted: verificationResult.emailVerified,
       });
     } catch (error) {
       console.error('❌ [Verify Phone OTP Error]:', error.message);
@@ -335,11 +419,11 @@ export function createAuthRouter(io) {
       // Emit Safe Socket.IO Event
       emitSocketEvent('EMAIL_VERIFIED', {
         verificationId,
-        phoneVerified: session.phoneVerified,
+        phoneVerified: verificationResult.phoneVerified,
         emailVerified: true,
       });
 
-      if (session.phoneVerified) {
+      if (verificationResult.phoneVerified) {
         emitSocketEvent('VERIFICATION_COMPLETED', {
           verificationId,
           status: 'ready_for_registration',
@@ -349,9 +433,9 @@ export function createAuthRouter(io) {
       return res.json({
         success: true,
         message: 'Email address verified successfully.',
-        phoneVerified: session.phoneVerified,
+        phoneVerified: verificationResult.phoneVerified,
         emailVerified: true,
-        verificationCompleted: session.phoneVerified,
+        verificationCompleted: verificationResult.phoneVerified,
       });
     } catch (error) {
       console.error('❌ [Verify Email OTP Error]:', error.message);
