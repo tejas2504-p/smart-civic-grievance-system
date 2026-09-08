@@ -13,6 +13,7 @@ import { createComplaintRouter } from './routes/complaints.js';
 import notificationRoutes from './routes/notifications.js';
 import analyticsRoutes from './routes/analytics.js';
 import slaRoutes from './routes/sla.js';
+import reportsRoutes from './routes/reports.js';
 import jwt from 'jsonwebtoken';
 import User from './models/User.js';
 import { helmetMiddleware } from './middleware/security.js';
@@ -154,6 +155,7 @@ app.use('/api/complaints', createComplaintRouter(io));
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/sla', slaRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Initialize SLA Cron Job
 initSLACron(io);

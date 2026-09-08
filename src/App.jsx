@@ -8,6 +8,7 @@ import AppShell from './components/layout/AppShell';
 // Public pages
 import LandingPage from './pages/public/LandingPage';
 import TrackComplaintPage from './pages/public/TrackComplaintPage';
+import TransparencyDashboard from './pages/public/TransparencyDashboard';
 import FAQPage from './pages/public/FAQPage';
 import HelpPage from './pages/public/HelpPage';
 
@@ -62,6 +63,7 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/track" element={<TrackComplaintPage />} />
+        <Route path="/transparency" element={<TransparencyDashboard />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/help" element={<HelpPage />} />
 

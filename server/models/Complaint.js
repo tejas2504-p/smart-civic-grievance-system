@@ -108,5 +108,11 @@ const complaintSchema = new mongoose.Schema({
   lastUpdated: { type: String, default: '' },
 }, { strict: false, timestamps: true });
 
+// Analytical Indexes
+complaintSchema.index({ department: 1, status: 1 });
+complaintSchema.index({ category: 1, submittedDate: -1 });
+complaintSchema.index({ slaState: 1 });
+complaintSchema.index({ 'location.city': 1 });
+
 export default mongoose.models.Complaint || mongoose.model('Complaint', complaintSchema);
 

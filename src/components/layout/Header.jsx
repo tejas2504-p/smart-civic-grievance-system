@@ -100,6 +100,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
   const publicNavLinks = [
     { to: '/', label: 'Home' },
     { to: '/track', label: 'Track Complaint' },
+    { to: '/transparency', label: 'Transparency' },
     { to: '/faq', label: 'FAQ' },
     { to: '/help', label: 'Help & Support' },
     { to: '/admin/map', label: 'Issues Map' },

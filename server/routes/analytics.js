@@ -83,4 +83,96 @@ router.get('/sla', async (req, res) => {
   }
 });
 
+// @route   GET /api/analytics/trends
+// @desc    Get complaint trends over time
+router.get('/trends', async (req, res) => {
+  try {
+    const { period = 'monthly' } = req.query; // daily, weekly, monthly, yearly
+    
+    // Default to monthly trend grouping
+    const groupBy = {
+      year: { $year: '$submittedDate' },
+      month: { $month: '$submittedDate' }
+    };
+    
+    if (period === 'daily') {
+      groupBy.day = { $dayOfMonth: '$submittedDate' };
+    }
+
+    const trends = await Complaint.aggregate([
+      {
+        $group: {
+          _id: groupBy,
+          total: { $sum: 1 },
+          resolved: {
+            $sum: {
+              $cond: [{ $in: ['$status', ['Resolved', 'Closed']] }, 1, 0]
+            }
+          }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+    ]);
+
+    const formattedTrends = trends.map(t => {
+      const monthName = new Date(t._id.year, (t._id.month || 1) - 1).toLocaleString('default', { month: 'short' });
+      const label = t._id.day ? `${t._id.day} ${monthName}` : monthName;
+      return { label, complaints: t.total, resolved: t.resolved };
+    });
+
+    res.json({ success: true, data: formattedTrends });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @route   GET /api/analytics/locations
+// @desc    Get complaint geographical distribution
+router.get('/locations', async (req, res) => {
+  try {
+    const locations = await Complaint.aggregate([
+      { $match: { 'location.lat': { $exists: true }, 'location.lng': { $exists: true } } },
+      { $project: { _id: 1, lat: '$location.lat', lng: '$location.lng', status: 1, category: 1 } }
+    ]);
+    res.json({ success: true, data: locations });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @route   GET /api/analytics/public
+// @desc    Get sanitized public transparency data
+router.get('/public', async (req, res) => {
+  try {
+    const total = await Complaint.countDocuments();
+    const resolved = await Complaint.countDocuments({ status: { $in: ['Resolved', 'Closed'] } });
+    const resolutionRate = total > 0 ? ((resolved / total) * 100).toFixed(1) : 0;
+
+    const departmentStats = await Complaint.aggregate([
+      { $group: { _id: '$department', count: { $sum: 1 }, resolved: { $sum: { $cond: [{ $in: ['$status', ['Resolved', 'Closed']] }, 1, 0] } } } },
+      { $project: { department: '$_id', total: '$count', resolved: 1, rate: { $multiply: [{ $divide: ['$resolved', { $cond: [{ $eq: ['$count', 0] }, 1, '$count'] }] }, 100] } } },
+      { $sort: { total: -1 } }
+    ]);
+
+    const categoryStats = await Complaint.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        resolved,
+        resolutionRate: Number(resolutionRate),
+        departmentStats,
+        categoryStats
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
