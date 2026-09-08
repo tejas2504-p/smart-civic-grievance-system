@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import OTPVerification from '../models/OTPVerification.js';
+import { protect } from '../middleware/auth.js';
 import { createVerificationSession, createEmailVerificationSession, createPhoneVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
 import AuditLog from '../models/AuditLog.js';
 import { verifyCaptcha } from '../services/captcha/captchaService.js';

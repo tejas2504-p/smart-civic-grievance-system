@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 const API_BASE = 'http://localhost:5000/api';
 
 async function request(method, endpoint, payload = null, headers = {}) {

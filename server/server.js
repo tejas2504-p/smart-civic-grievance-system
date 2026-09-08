@@ -12,7 +12,25 @@ import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
 import analyticsRoutes from './routes/analytics.js';
 import { helmetMiddleware } from './middleware/security.js';
-import mongoSanitize from 'express-mongo-sanitize';
+
+// Custom NoSQL Injection Protection
+const sanitizeNoSQL = (req, res, next) => {
+  const sanitize = (obj) => {
+    if (obj instanceof Object) {
+      for (let key in obj) {
+        if (/^\$/.test(key) || key.includes('.')) {
+          delete obj[key];
+        } else {
+          sanitize(obj[key]);
+        }
+      }
+    }
+  };
+  if (req.body) sanitize(req.body);
+  if (req.query) sanitize(req.query);
+  if (req.params) sanitize(req.params);
+  next();
+};
 
 // Security constraints check
 if (process.env.NODE_ENV === 'production') {
@@ -52,7 +70,7 @@ app.use(helmetMiddleware);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(mongoSanitize()); // Prevent NoSQL Injection attacks
+app.use(sanitizeNoSQL); // Custom NoSQL protection
 
 // Connect to MongoDB Atlas (top-level await)
 const isDbConnected = await connectDB();
