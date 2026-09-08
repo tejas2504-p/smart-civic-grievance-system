@@ -39,6 +39,12 @@ export async function sendSMSOTP(phoneNumber, otp) {
   
   const smsBody = `Your Government Grievance Portal verification OTP is ${otp}. It expires in 5 minutes. Do not share this OTP with anyone.`;
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`\n\x1b[36m========================================================`);
+    console.log(`🛠️  [DEV MODE] SMS OTP for ${formattedPhone}: \x1b[33m${otp}\x1b[36m`);
+    console.log(`========================================================\x1b[0m\n`);
+  }
+
   // Masked phone for safe logging
   const maskedPhone = formattedPhone.length >= 10
     ? `${formattedPhone.slice(0, 4)}XXXXXX${formattedPhone.slice(-2)}`

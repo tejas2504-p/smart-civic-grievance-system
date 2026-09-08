@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 
 import { connectDB } from './config/db.js';
 import { createAuthRouter } from './routes/auth.js';
@@ -36,8 +37,22 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Connect to MongoDB Atlas
-connectDB();
+// Connect to MongoDB Atlas (top-level await)
+const isDbConnected = await connectDB();
+
+// Database Health Check Middleware for API routes
+app.use('/api', (req, res, next) => {
+  // Allow health check endpoint to always respond
+  if (req.path === '/health') return next();
+  
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      success: false, 
+      message: 'Service temporarily unavailable (Database offline). Please try again later.' 
+    });
+  }
+  next();
+});
 
 // Socket.IO Real-time Connection Lifecycle
 io.on('connection', (socket) => {
@@ -114,8 +129,10 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
   res.json({
-    status: 'ok',
+    status: dbConnected ? 'ok' : 'degraded',
+    database: dbConnected ? 'connected' : 'disconnected',
     service: 'Smart Government Grievance Portal API',
     security: 'Production-Ready Real-Time OTP + CAPTCHA Active',
     timestamp: new Date().toISOString(),
@@ -137,7 +154,7 @@ server.listen(PORT, () => {
   🚀 [Backend Server] Running on http://localhost:${PORT}
   📡 [WebSockets] Socket.IO server is active
   🛡️ [Security] Real-Time OTP (SMS/Email) & CAPTCHA Active
-  📦 [Database] MongoDB Atlas connection initializing...
+  📦 [Database] ${isDbConnected ? 'MongoDB connected successfully' : 'MongoDB connection failed (Running in degraded mode)'}
   =======================================================
   `);
 });

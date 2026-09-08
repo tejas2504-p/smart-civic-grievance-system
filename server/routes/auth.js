@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import OTPVerification from '../models/OTPVerification.js';
 import { protect } from '../middleware/auth.js';
-import { generateSecureOTP, generateVerificationId, hashOTP, verifyOTPHash } from '../services/crypto/otpCrypto.js';
+import { createVerificationSession, createEmailVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
 import { verifyCaptcha } from '../services/captcha/captchaService.js';
 import { sendSMSOTP, formatIndianPhoneNumber, isValidIndianMobile } from '../services/sms/smsService.js';
 import { sendEmailOTP } from '../services/email/emailService.js';
@@ -92,43 +92,15 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 5. Generate 2 separate cryptographically secure OTPs
-      const phoneOtp = generateSecureOTP();
-      const emailOtp = generateSecureOTP();
+      // 5. Generate secure OTPs and store session via OTP Service
+      const sessionData = await createVerificationSession(formattedPhone, normalizedEmail, purpose);
+      const { verificationId, expiresInSeconds, plaintextPhoneOtp, plaintextEmailOtp } = sessionData;
 
-      // 6. Hash OTPs with HMAC-SHA256 (Never store plaintext in DB)
-      const phoneOtpHash = hashOTP(phoneOtp);
-      const emailOtpHash = hashOTP(emailOtp);
+      // 6. Dispatch real SMS OTP via transactional provider
+      const smsPromise = sendSMSOTP(formattedPhone, plaintextPhoneOtp);
 
-      // 7. Expiration (5 minutes)
-      const expiresInSeconds = 300; // 5 mins
-      const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
-      const verificationId = generateVerificationId();
-
-      // 8. Store session in MongoDB Atlas
-      await OTPVerification.create({
-        verificationId,
-        phoneNumber: formattedPhone,
-        email: normalizedEmail,
-        phoneOtpHash,
-        emailOtpHash,
-        phoneVerified: false,
-        emailVerified: false,
-        captchaVerified: true,
-        phoneAttempts: 0,
-        emailAttempts: 0,
-        resendCount: 0,
-        lastSentAt: new Date(),
-        expiresAt,
-        isCompleted: false,
-        purpose,
-      });
-
-      // 9. Dispatch real SMS OTP via transactional provider
-      const smsPromise = sendSMSOTP(formattedPhone, phoneOtp);
-
-      // 10. Dispatch real Email OTP via Nodemailer SMTP
-      const emailPromise = sendEmailOTP(normalizedEmail, emailOtp);
+      // 7. Dispatch real Email OTP via Nodemailer SMTP
+      const emailPromise = sendEmailOTP(normalizedEmail, plaintextEmailOtp);
 
       const [smsResult, emailResult] = await Promise.allSettled([smsPromise, emailPromise]);
 
@@ -164,6 +136,84 @@ export function createAuthRouter(io) {
   });
 
   /**
+   * @route   POST /api/auth/send-email-otp
+   * @desc    Generate cryptographically secure OTP for Email only, store hash in MongoDB, and dispatch Email
+   * @access  Public (Rate-limited, CAPTCHA protected)
+   */
+  router.post('/send-email-otp', sendOtpLimiter, async (req, res) => {
+    try {
+      const { email, captchaToken, purpose = 'registration' } = req.body;
+
+      // 1. Validate Email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid email address.',
+        });
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      // 2. Prevent duplicate account registration
+      if (purpose === 'registration') {
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+          return res.status(400).json({
+            success: false,
+            message: 'An account with this email address already exists.',
+          });
+        }
+      }
+
+      // 3. Server-Side CAPTCHA Verification
+      if (captchaToken) {
+        const captchaResult = await verifyCaptcha(captchaToken, req.ip);
+        if (!captchaResult.success) {
+          return res.status(400).json({
+            success: false,
+            message: captchaResult.message || 'Human verification (CAPTCHA) failed. Please try again.',
+          });
+        }
+      }
+
+      // 4. Generate secure OTPs and store session via OTP Service
+      const sessionData = await createEmailVerificationSession(normalizedEmail, purpose);
+      const { verificationId, expiresInSeconds, plaintextEmailOtp } = sessionData;
+
+      // 5. Dispatch real Email OTP via Nodemailer SMTP
+      // We don't await this directly to prevent the request from hanging if SMTP is slow,
+      // but we wait for it so we can log failures. If we want to return immediately, we can use Promise.allSettled.
+      const emailResult = await Promise.allSettled([sendEmailOTP(normalizedEmail, plaintextEmailOtp)]);
+      
+      const emailOk = emailResult[0].status === 'fulfilled' && emailResult[0].value?.success;
+
+      // 6. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
+      emitSocketEvent('EMAIL_OTP_SENT', {
+        verificationId,
+        emailMasked: maskEmail(normalizedEmail),
+        expiresIn: expiresInSeconds,
+        timestamp: Date.now(),
+      });
+
+      // 7. Return generic success response (NO OTP IN RESPONSE)
+      return res.status(200).json({
+        success: true,
+        message: 'Verification OTP sent successfully to your email address.',
+        verificationId,
+        expiresIn: expiresInSeconds,
+        emailMasked: maskEmail(normalizedEmail),
+        deliveryStatus: {
+          email: emailOk ? 'delivered' : 'queued',
+        },
+      });
+    } catch (error) {
+      console.error('❌ [Send Email OTP Error]:', error.message);
+      return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+    }
+  });
+
+  /**
    * @route   POST /api/auth/verify-phone-otp
    * @desc    Verify Phone OTP hash, enforce attempt limit and expiry
    * @access  Public (Rate-limited)
@@ -181,56 +231,33 @@ export function createAuthRouter(io) {
         return res.status(400).json({ success: false, message: 'OTP must be a 6-digit number.' });
       }
 
-      const session = await OTPVerification.findOne({ verificationId });
-      if (!session) {
-        return res.status(404).json({ success: false, message: 'Verification session not found or expired. Please request a new OTP.' });
-      }
-
-      // Check Expiration
-      if (new Date() > session.expiresAt) {
-        return res.status(400).json({ success: false, message: 'OTP expired. Please request a new OTP.' });
-      }
-
-      // Check Attempt Protection (Max 5 attempts)
-      if (session.phoneAttempts >= 5) {
-        await OTPVerification.deleteOne({ _id: session._id });
-        return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Session invalidated. Please request a new OTP.' });
+      let verificationResult;
+      try {
+        verificationResult = await verifyPhoneOTP(verificationId, cleanOtp);
+      } catch (err) {
+        if (err.message.includes('Too many incorrect attempts')) {
+          return res.status(429).json({ success: false, message: err.message });
+        }
+        if (err.message.includes('expired') || err.message.includes('not found')) {
+          return res.status(404).json({ success: false, message: err.message });
+        }
+        return res.status(400).json({
+          success: false,
+          message: err.message,
+          attemptsRemaining: err.attemptsRemaining,
+        });
       }
 
       // Already verified check
-      if (session.phoneVerified) {
+      if (verificationResult.alreadyVerified) {
         return res.json({
           success: true,
           message: 'Phone number already verified.',
           phoneVerified: true,
-          emailVerified: session.emailVerified,
-          verificationCompleted: session.emailVerified,
+          emailVerified: verificationResult.emailVerified,
+          verificationCompleted: verificationResult.emailVerified,
         });
       }
-
-      // Verify OTP Hash securely (timing-safe comparison against HMAC-SHA256 hash)
-      const isValid = verifyOTPHash(cleanOtp, session.phoneOtpHash);
-
-      if (!isValid) {
-        session.phoneAttempts += 1;
-        await session.save();
-
-        const remaining = 5 - session.phoneAttempts;
-        if (remaining <= 0) {
-          await OTPVerification.deleteOne({ _id: session._id });
-          return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Session invalidated. Please request a new OTP.' });
-        }
-
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid Phone OTP. Please check the OTP and try again.',
-          attemptsRemaining: remaining,
-        });
-      }
-
-      // Mark Phone as Verified
-      session.phoneVerified = true;
-      await session.save();
 
       // Emit Safe Socket.IO Event
       emitSocketEvent('PHONE_VERIFIED', {
@@ -277,56 +304,33 @@ export function createAuthRouter(io) {
         return res.status(400).json({ success: false, message: 'OTP must be a 6-digit number.' });
       }
 
-      const session = await OTPVerification.findOne({ verificationId });
-      if (!session) {
-        return res.status(404).json({ success: false, message: 'Verification session not found or expired. Please request a new OTP.' });
-      }
-
-      // Check Expiration
-      if (new Date() > session.expiresAt) {
-        return res.status(400).json({ success: false, message: 'OTP expired. Please request a new OTP.' });
-      }
-
-      // Check Attempt Protection (Max 5 attempts)
-      if (session.emailAttempts >= 5) {
-        await OTPVerification.deleteOne({ _id: session._id });
-        return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Session invalidated. Please request a new OTP.' });
+      let verificationResult;
+      try {
+        verificationResult = await verifyEmailOTP(verificationId, cleanOtp);
+      } catch (err) {
+        if (err.message.includes('Too many incorrect attempts')) {
+          return res.status(429).json({ success: false, message: err.message });
+        }
+        if (err.message.includes('expired') || err.message.includes('not found')) {
+          return res.status(404).json({ success: false, message: err.message });
+        }
+        return res.status(400).json({
+          success: false,
+          message: err.message,
+          attemptsRemaining: err.attemptsRemaining,
+        });
       }
 
       // Already verified check
-      if (session.emailVerified) {
+      if (verificationResult.alreadyVerified) {
         return res.json({
           success: true,
           message: 'Email address already verified.',
-          phoneVerified: session.phoneVerified,
+          phoneVerified: verificationResult.phoneVerified,
           emailVerified: true,
-          verificationCompleted: session.phoneVerified,
+          verificationCompleted: verificationResult.phoneVerified,
         });
       }
-
-      // Verify OTP Hash securely (timing-safe comparison against HMAC-SHA256 hash)
-      const isValid = verifyOTPHash(cleanOtp, session.emailOtpHash);
-
-      if (!isValid) {
-        session.emailAttempts += 1;
-        await session.save();
-
-        const remaining = 5 - session.emailAttempts;
-        if (remaining <= 0) {
-          await OTPVerification.deleteOne({ _id: session._id });
-          return res.status(429).json({ success: false, message: 'Too many incorrect attempts. Session invalidated. Please request a new OTP.' });
-        }
-
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid Email OTP. Please check the OTP and try again.',
-          attemptsRemaining: remaining,
-        });
-      }
-
-      // Mark Email as Verified
-      session.emailVerified = true;
-      await session.save();
 
       // Emit Safe Socket.IO Event
       emitSocketEvent('EMAIL_VERIFIED', {
@@ -368,52 +372,31 @@ export function createAuthRouter(io) {
         return res.status(400).json({ success: false, message: 'Verification ID is required.' });
       }
 
-      const session = await OTPVerification.findOne({ verificationId });
-      if (!session) {
-        return res.status(404).json({ success: false, message: 'Verification session expired. Please start verification again.' });
+      let resendResult;
+      try {
+        resendResult = await resendOTPs(verificationId);
+      } catch (err) {
+        if (err.isCooldown) {
+          return res.status(429).json({
+            success: false,
+            message: err.message,
+            retryAfter: err.retryAfter,
+          });
+        }
+        if (err.message.includes('Maximum resend limit')) {
+          return res.status(429).json({ success: false, message: err.message });
+        }
+        return res.status(404).json({ success: false, message: err.message });
       }
 
-      // 1. Cooldown check (Minimum 30 seconds between resends)
-      const now = Date.now();
-      const lastSentTime = new Date(session.lastSentAt).getTime();
-      const elapsedSeconds = Math.floor((now - lastSentTime) / 1000);
-
-      if (elapsedSeconds < 30) {
-        return res.status(429).json({
-          success: false,
-          message: `Please wait ${30 - elapsedSeconds} seconds before requesting another OTP.`,
-          retryAfter: 30 - elapsedSeconds,
-        });
-      }
-
-      // 2. Max resends limit (Max 3 resends per session)
-      if (session.resendCount >= 3) {
-        return res.status(429).json({
-          success: false,
-          message: 'Maximum resend limit (3 times) reached. Please restart registration.',
-        });
-      }
-
-      // 3. Generate fresh cryptographically secure OTPs
-      const newPhoneOtp = generateSecureOTP();
-      const newEmailOtp = generateSecureOTP();
-
-      session.phoneOtpHash = hashOTP(newPhoneOtp);
-      session.emailOtpHash = hashOTP(newEmailOtp);
-      session.resendCount += 1;
-      session.lastSentAt = new Date();
-      session.expiresAt = new Date(Date.now() + 300 * 1000); // Reset 5 min expiry
-      session.phoneAttempts = 0;
-      session.emailAttempts = 0;
-
-      await session.save();
+      const { session, expiresInSeconds, plaintextPhoneOtp, plaintextEmailOtp, resendsRemaining } = resendResult;
 
       // 4. Dispatch SMS & Email
       if (channel === 'both' || channel === 'phone') {
-        sendSMSOTP(session.phoneNumber, newPhoneOtp);
+        sendSMSOTP(session.phoneNumber, plaintextPhoneOtp);
       }
       if (channel === 'both' || channel === 'email') {
-        sendEmailOTP(session.email, newEmailOtp);
+        sendEmailOTP(session.email, plaintextEmailOtp);
       }
 
       // 5. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)

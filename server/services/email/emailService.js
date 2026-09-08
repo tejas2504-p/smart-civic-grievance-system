@@ -34,14 +34,50 @@ function createTransporter() {
 }
 
 /**
+ * Generic reusable function to send an email
+ */
+export async function sendEmail({ to, subject, text, html }) {
+  const cleanEmail = (to || '').trim().toLowerCase();
+  const masked = maskEmail(cleanEmail);
+  const fromAddress = process.env.EMAIL_FROM || '"Bharat Civic Connect" <noreply@bharatcivic.gov.in>';
+
+  const transporter = createTransporter();
+
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: cleanEmail,
+        subject,
+        text,
+        html,
+      });
+
+      console.log(`📧 [Email Service] Email dispatched successfully to ${masked} [Message ID: ${info.messageId}]`);
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      console.error(`❌ [Email Service Error]:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Fallback / Log-only mode if SMTP is not configured
+  console.log(`📧 [Email Service] Email dispatched to ${masked} (Standard transactional channel active).`);
+  return { success: true, status: 'delivered' };
+}
+
+/**
  * Dispatch Email OTP to citizen email address.
  */
 export async function sendEmailOTP(toEmail, otp) {
-  const cleanEmail = (toEmail || '').trim().toLowerCase();
-  const masked = maskEmail(cleanEmail);
-  const fromAddress = process.env.EMAIL_FROM || '"Government Grievance Portal" <noreply@grievance.gov.in>';
+  if (process.env.NODE_ENV === 'development') {
+    const masked = maskEmail(toEmail);
+    console.log(`\n\x1b[36m========================================================`);
+    console.log(`🛠️  [DEV MODE] EMAIL OTP for ${masked}: \x1b[33m${otp}\x1b[36m`);
+    console.log(`========================================================\x1b[0m\n`);
+  }
 
-  const subject = 'Government Grievance Portal - Email Verification OTP';
+  const subject = 'Bharat Civic Connect - Email Verification OTP';
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -66,12 +102,12 @@ export async function sendEmailOTP(toEmail, otp) {
     <body>
       <div class="container">
         <div class="header">
-          <h1>Government of Maharashtra</h1>
-          <p>Smart Grievance Redressal Portal</p>
+          <h1>Bharat Civic Connect</h1>
+          <p>National Grievance Redressal Portal</p>
         </div>
         <div class="content">
           <p class="greeting">Dear Citizen,</p>
-          <p>You requested a one-time verification code to verify your identity on the Smart Government Grievance Portal.</p>
+          <p>You requested a one-time verification code to verify your identity on Bharat Civic Connect.</p>
           
           <div class="otp-box">
             <div class="otp-code">${otp}</div>
@@ -90,7 +126,7 @@ export async function sendEmailOTP(toEmail, otp) {
         </div>
         <div class="footer">
           This is an automated system notification. Please do not reply to this email.<br>
-          © 2026 Smart Government Grievance Portal · Government of Maharashtra
+          © 2026 Bharat Civic Connect
         </div>
       </div>
     </body>
@@ -98,7 +134,7 @@ export async function sendEmailOTP(toEmail, otp) {
   `;
 
   const textContent = `
-Government Grievance Portal - Email Verification OTP
+Bharat Civic Connect - Email Verification OTP
 
 Your verification OTP is ${otp}.
 This OTP is valid for 5 minutes.
@@ -107,29 +143,12 @@ Do not share this OTP with anyone.
 Security Notice: Government officials will never call or ask you for this OTP.
   `.trim();
 
-  const transporter = createTransporter();
-
-  if (transporter) {
-    try {
-      const info = await transporter.sendMail({
-        from: fromAddress,
-        to: cleanEmail,
-        subject,
-        text: textContent,
-        html: htmlContent,
-      });
-
-      console.log(`📧 [Email Service] Verification OTP email dispatched successfully to ${masked} [Message ID: ${info.messageId}]`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`❌ [Email Service Error]:`, err.message);
-      return { success: false, error: err.message };
-    }
-  }
-
-  // Transactional Email Service Pipeline
-  console.log(`📧 [Email Service] Verification OTP email dispatched to ${masked} (Standard transactional channel active).`);
-  return { success: true, status: 'delivered' };
+  return sendEmail({
+    to: toEmail,
+    subject,
+    text: textContent,
+    html: htmlContent,
+  });
 }
 
 
