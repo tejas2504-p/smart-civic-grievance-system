@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { complaints } from '../../data/mockData';
 import { StatusBadge, PriorityBadge } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
 import { Search, ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import ComplaintChat from '../../components/ui/ComplaintChat';
 
 export default function TrackComplaintPage() {
   const [searchParams] = useSearchParams();
@@ -12,11 +12,32 @@ export default function TrackComplaintPage() {
   const [result, setResult] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
-  const handleSearch = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async (e) => {
     e.preventDefault();
-    const found = complaints.find(c => c.id.toLowerCase() === trackId.toLowerCase().trim());
-    if (found) { setResult(found); setNotFound(false); }
-    else { setResult(null); setNotFound(true); toast.error('Complaint not found.'); }
+    if (!trackId.trim()) return;
+    
+    setLoading(true);
+    setResult(null);
+    setNotFound(false);
+    
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/complaints/${trackId.trim()}`);
+      const data = await res.json();
+      
+      if (data.success && data.data) {
+        setResult(data.data);
+      } else {
+        setNotFound(true);
+        toast.error('Complaint not found.');
+      }
+    } catch (err) {
+      setNotFound(true);
+      toast.error('Error fetching complaint details.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,8 +72,8 @@ export default function TrackComplaintPage() {
             aria-label="Complaint ID"
             required
           />
-          <button type="submit" className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.9375rem' }}>
-            <Search size={16} /> Track
+          <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.9375rem' }}>
+            <Search size={16} /> {loading ? 'Tracking...' : 'Track'}
           </button>
         </form>
 
@@ -107,21 +128,20 @@ export default function TrackComplaintPage() {
                 <Link to="/login" className="btn btn-primary btn-sm">Login to View Full Details</Link>
                 <Link to="/" className="btn btn-ghost btn-sm">Back to Home</Link>
               </div>
+              
+              <div style={{ marginTop: 24 }}>
+                <ComplaintChat complaintId={result.id} />
+              </div>
             </div>
           </div>
         )}
 
         {!result && !notFound && (
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px 24px' }}>
-            <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: 12 }}>Quick Examples</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>Try one of these complaint IDs:</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {complaints.map(c => (
-                <button key={c.id} className="btn btn-outline btn-sm" onClick={() => setTrackId(c.id)} style={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>
-                  {c.id}
-                </button>
-              ))}
-            </div>
+            <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: 12 }}>Tracking Information</h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+              Enter the exact Complaint ID provided during registration (e.g., MH-2026-0001) to view real-time status updates and communicate with the assigned officer.
+            </p>
           </div>
         )}
       </div>

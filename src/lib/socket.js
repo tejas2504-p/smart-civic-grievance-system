@@ -6,6 +6,16 @@ let socket = null;
 
 export function getSocket() {
   if (!socket) {
+    const authData = localStorage.getItem('auth');
+    let token = null;
+    if (authData) {
+      try {
+        token = JSON.parse(authData).state.user.token;
+      } catch (e) {
+        try { token = JSON.parse(authData).token; } catch (err) {}
+      }
+    }
+
     socket = io(SERVER_URL, {
        transports: ['websocket', 'polling'],
        autoConnect: true,
@@ -13,6 +23,9 @@ export function getSocket() {
        reconnectionAttempts: 10,
        reconnectionDelay: 2000,
        timeout: 10000,
+       auth: {
+         token: token
+       }
      });
 
      socket.on('connect', () => {

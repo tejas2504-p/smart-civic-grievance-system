@@ -9,7 +9,7 @@ import {
 import { notifications as mockNotifs } from '../../data/mockData';
 import AdMarquee from './AdMarquee';
 import ScreenReaderModal from './ScreenReaderModal';
-
+import { getSocket } from '../../lib/socket';
 
 export default function Header({ onMenuToggle, sidebarOpen }) {
   const { t, i18n } = useTranslation();
@@ -24,7 +24,44 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
   const [searchVal, setSearchVal] = useState('');
   const [fontSizeLevel, setFontSizeLevel] = useState(1); // 0: small, 1: normal, 2: large
 
-  const unread = mockNotifs.filter(n => !n.read).length;
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Fetch initial notifications
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications`, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setNotifications(data.data);
+      })
+      .catch(console.error);
+
+    // Setup Socket.IO listener
+    const socket = getSocket();
+    const handleNewNotif = (notif) => {
+      setNotifications(prev => [notif, ...prev]);
+    };
+    
+    socket.on('new_notification', handleNewNotif);
+    
+    return () => {
+      socket.off('new_notification', handleNewNotif);
+    };
+  }, [user]);
+
+  const unread = notifications.filter(n => !n.read).length;
+
+  const markAllRead = () => {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications/read-all`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${user.token}` }
+    }).then(() => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    });
+  };
 
   const langOptions = [
     { code: 'en', label: 'English' },
@@ -463,18 +500,28 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                   <span style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                     Notifications
                   </span>
-                  <Link
-                    to="/notifications"
-                    style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontWeight: 500 }}
-                    onClick={() => setShowNotif(false)}
-                  >
-                    View all
-                  </Link>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      onClick={markAllRead}
+                      style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--color-secondary)', fontWeight: 500, cursor: 'pointer' }}
+                    >
+                      Mark all read
+                    </button>
+                    <Link
+                      to="/notifications"
+                      style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 500 }}
+                      onClick={() => setShowNotif(false)}
+                    >
+                      View all
+                    </Link>
+                  </div>
                 </div>
                 <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-                  {mockNotifs.slice(0, 4).map(n => (
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>No notifications</div>
+                  ) : notifications.slice(0, 5).map(n => (
                     <div
-                      key={n.id}
+                      key={n._id || n.id}
                       style={{
                         padding: '10px 16px',
                         borderBottom: '1px solid var(--color-border)',
@@ -488,7 +535,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                         {n.message}
                       </p>
                       <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
-                        {n.date} · {n.time}
+                        {new Date(n.createdAt || Date.now()).toLocaleString()}
                       </p>
                     </div>
                   ))}

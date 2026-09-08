@@ -10,7 +10,10 @@ import mongoose from 'mongoose';
 import { connectDB } from './config/db.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
+import notificationRoutes from './routes/notifications.js';
 import analyticsRoutes from './routes/analytics.js';
+import jwt from 'jsonwebtoken';
+import User from './models/User.js';
 import { helmetMiddleware } from './middleware/security.js';
 
 // Custom NoSQL Injection Protection
@@ -89,14 +92,41 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Socket.IO Real-time Connection Lifecycle
-io.on('connection', (socket) => {
-  console.log(`⚡ [Socket.IO] Client connected: ${socket.id}`);
+// Socket.IO Real-time Connection Lifecycle with JWT Authentication
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    return next(new Error('Authentication error: No token provided'));
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026');
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) return next(new Error('Authentication error: User not found'));
+    socket.user = user;
+    next();
+  } catch (err) {
+    return next(new Error('Authentication error: Invalid token'));
+  }
+});
 
-  // Join citizen room for targeted notifications
-  socket.on('join_user', (userId) => {
-    socket.join(`user_${userId}`);
-    console.log(`👤 Client ${socket.id} joined user_${userId}`);
+io.on('connection', (socket) => {
+  console.log(`⚡ [Socket.IO] Client connected: ${socket.id} (User: ${socket.user.name}, Role: ${socket.user.role})`);
+
+  // Automatically join their own user room for private notifications
+  socket.join(`user_${socket.user._id.toString()}`);
+  console.log(`👤 Client ${socket.id} auto-joined user_${socket.user._id.toString()}`);
+
+  if (socket.user.role === 'officer' || socket.user.role === 'admin') {
+     socket.join('officer_all');
+     if (socket.user.department) socket.join(`dept_${socket.user.department}`);
+  }
+
+  // Join complaint-specific chat room
+  socket.on('join_complaint', async (complaintId) => {
+    // Basic auth check: we trust the client to only join complaints they can view, 
+    // but message sending via REST API is heavily authorized.
+    socket.join(`complaint_${complaintId}`);
+    console.log(`💬 Client ${socket.id} joined complaint_${complaintId}`);
   });
 
   // Join officer / department room
@@ -119,6 +149,7 @@ io.on('connection', (socket) => {
 // Mount API Routes with Socket.IO Real-time integration
 app.use('/api/auth', createAuthRouter(io));
 app.use('/api/complaints', createComplaintRouter(io));
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 // Root endpoint - Server status & portal navigation

@@ -2,6 +2,7 @@ import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Notification from '../models/Notification.js';
 import AuditLog from '../models/AuditLog.js';
+import ComplaintMessage from '../models/ComplaintMessage.js';
 import { protect, authorizeRoles } from '../middleware/auth.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
@@ -160,10 +161,11 @@ export function createComplaintRouter(io) {
 
       // ⚡ EMIT REAL-TIME WEBSOCKET EVENT
       if (io) {
-        io.emit('new_grievance', {
+        io.to('officer_all').emit('new_grievance', {
           complaint,
           notification: notif,
         });
+        io.to(`user_${req.user._id.toString()}`).emit('new_grievance', { complaint });
         console.log(`📡 [Socket.IO] Emitted 'new_grievance' for ${complaint.id}`);
       }
 
@@ -228,12 +230,17 @@ export function createComplaintRouter(io) {
       // Create citizen notification
       const notif = await Notification.create({
         userId: complaint.citizen?.id || 'citizen_user',
-        role: 'citizen',
         complaintId: complaint.id,
-        title: `Status Update: ${complaint.id}`,
-        message: `Your grievance "${complaint.title}" is now marked as "${status}".`,
+        title: 'Status Updated',
+        message: `Your grievance ${complaint.id} status is now: ${status}`,
         type: 'status_change',
       });
+
+      io.to(`user_${notif.userId}`).emit('status_updated', {
+        complaintId: complaint.id,
+        status: complaint.status,
+      });
+      io.to(`user_${notif.userId}`).emit('new_notification', notif);
 
       // ⚡ EMIT REAL-TIME WEBSOCKET EVENT
       if (io) {
@@ -282,6 +289,69 @@ export function createComplaintRouter(io) {
       }
 
       res.json({ success: true, data: complaint });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // @route   GET /api/complaints/:id/messages
+  // @desc    Get chat messages for a complaint
+  router.get('/:id/messages', protect, async (req, res) => {
+    try {
+      const complaintId = req.params.id;
+      // Basic check, if officer it's fine, if citizen ensure it's their complaint
+      if (req.user.role === 'citizen') {
+        const complaint = await Complaint.findOne({ id: complaintId, 'citizen.id': req.user._id.toString() });
+        if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
+      }
+
+      const messages = await ComplaintMessage.find({ complaintId }).sort({ createdAt: 1 });
+      res.json({ success: true, count: messages.length, data: messages });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // @route   POST /api/complaints/:id/messages
+  // @desc    Send a message in complaint chat
+  router.post('/:id/messages', protect, async (req, res) => {
+    try {
+      const complaintId = req.params.id;
+      const { message } = req.body;
+      if (!message) return res.status(400).json({ success: false, message: 'Message is required' });
+
+      let complaint;
+      if (req.user.role === 'citizen') {
+        complaint = await Complaint.findOne({ id: complaintId, 'citizen.id': req.user._id.toString() });
+      } else {
+        complaint = await Complaint.findOne({ id: complaintId });
+      }
+
+      if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
+
+      const newMsg = await ComplaintMessage.create({
+        complaintId,
+        senderId: req.user._id.toString(),
+        senderName: req.user.name || 'User',
+        role: req.user.role,
+        message
+      });
+
+      // Emit to the specific complaint chat room
+      io.to(`complaint_${complaintId}`).emit('new_message', newMsg);
+
+      // Also create a notification for the OTHER party
+      const notifyUserId = req.user.role === 'citizen' ? 'officer_all' : complaint.citizen.id;
+      const notif = await Notification.create({
+        userId: notifyUserId,
+        complaintId,
+        title: 'New Message',
+        message: `${req.user.name} sent a message: "${message.substring(0, 30)}..."`,
+        type: 'new_message',
+      });
+      io.to(`user_${notifyUserId}`).emit('new_notification', notif);
+
+      res.status(201).json({ success: true, data: newMsg });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
