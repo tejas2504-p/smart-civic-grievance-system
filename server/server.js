@@ -12,6 +12,22 @@ import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
 import analyticsRoutes from './routes/analytics.js';
 import { helmetMiddleware } from './middleware/security.js';
+import mongoSanitize from 'express-mongo-sanitize';
+
+// Security constraints check
+if (process.env.NODE_ENV === 'production') {
+  const dummyJwt = 'grievance_portal_jwt_secret_key_2026';
+  const dummyTurnstile = '1x0000000000000000000000000000000AA';
+  
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === dummyJwt) {
+    console.error('❌ FATAL: JWT_SECRET must be securely set in production.');
+    process.exit(1);
+  }
+  
+  if (!process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY === dummyTurnstile) {
+    console.warn('⚠️ WARNING: Using dummy Turnstile key in production.');
+  }
+}
 
 // Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +52,7 @@ app.use(helmetMiddleware);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(mongoSanitize()); // Prevent NoSQL Injection attacks
 
 // Connect to MongoDB Atlas (top-level await)
 const isDbConnected = await connectDB();

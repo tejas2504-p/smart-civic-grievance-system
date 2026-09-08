@@ -2,8 +2,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import OTPVerification from '../models/OTPVerification.js';
-import { protect } from '../middleware/auth.js';
 import { createVerificationSession, createEmailVerificationSession, createPhoneVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
+import AuditLog from '../models/AuditLog.js';
 import { verifyCaptcha } from '../services/captcha/captchaService.js';
 import { sendSMSOTP, formatIndianPhoneNumber, isValidIndianMobile } from '../services/sms/smsService.js';
 import { sendEmailOTP } from '../services/email/emailService.js';
@@ -515,6 +515,9 @@ export function createAuthRouter(io) {
       if (!name || !email || !password || !phone) {
         return res.status(400).json({ success: false, message: 'All required registration fields must be provided.' });
       }
+      if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || typeof phone !== 'string') {
+        return res.status(400).json({ success: false, message: 'Invalid data format provided.' });
+      }
 
       const normalizedEmail = email.trim().toLowerCase();
       const formattedPhone = formatIndianPhoneNumber(phone);
@@ -568,6 +571,17 @@ export function createAuthRouter(io) {
         role: role || 'citizen',
       });
 
+      // Create Audit Log
+      await AuditLog.create({
+        action: 'REGISTER_SUCCESS',
+        entity: 'User',
+        entityId: user._id.toString(),
+        performedBy: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+        details: { phone: user.phone, verificationId: verificationId || 'None' }
+      });
+
       return res.status(201).json({
         success: true,
         message: 'Account created successfully! Welcome to the Smart Government Grievance Portal.',
@@ -594,6 +608,9 @@ export function createAuthRouter(io) {
   router.post('/login', authLimiter, async (req, res) => {
     try {
       const { email, password, captchaToken, verificationId } = req.body;
+
+      if (email && typeof email !== 'string') return res.status(400).json({ success: false, message: 'Invalid email format' });
+      if (password && typeof password !== 'string') return res.status(400).json({ success: false, message: 'Invalid password format' });
 
       // 1. CAPTCHA verification (if token provided)
       if (captchaToken) {
@@ -631,6 +648,17 @@ export function createAuthRouter(io) {
         session.isCompleted = true;
         await session.save();
 
+        // Create Audit Log
+        await AuditLog.create({
+          action: 'LOGIN_SUCCESS',
+          entity: 'User',
+          entityId: user._id.toString(),
+          performedBy: user.email,
+          role: user.role,
+          ipAddress: req.ip,
+          details: { method: 'otp' }
+        });
+
         return res.json({
           success: true,
           message: 'Signed in successfully with verified OTP.',
@@ -666,6 +694,17 @@ export function createAuthRouter(io) {
       if (!isMatch) {
         return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your password.' });
       }
+
+      // Create Audit Log
+      await AuditLog.create({
+        action: 'LOGIN_SUCCESS',
+        entity: 'User',
+        entityId: user._id.toString(),
+        performedBy: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+        details: { method: 'password' }
+      });
 
       return res.json({
         success: true,

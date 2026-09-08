@@ -1,6 +1,10 @@
 import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Notification from '../models/Notification.js';
+import AuditLog from '../models/AuditLog.js';
+import { protect, authorizeRoles } from '../middleware/auth.js';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 export function createComplaintRouter(io) {
   const router = express.Router();
@@ -44,10 +48,30 @@ export function createComplaintRouter(io) {
         .sort({ submittedDate: -1 })
         .limit(Number(limit));
 
+      // Privacy: Mask citizen PII unless user is an officer/admin
+      let isOfficer = false;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+           const token = req.headers.authorization.split(' ')[1];
+           const decoded = jwt.verify(token, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026');
+           const user = await User.findById(decoded.id);
+           if (user && (user.role === 'officer' || user.role === 'admin')) isOfficer = true;
+        } catch(e) {}
+      }
+
+      const safeComplaints = complaints.map(c => {
+        const obj = c.toObject();
+        if (!isOfficer && obj.citizen) {
+          obj.citizen.phone = '***';
+          obj.citizen.email = '***';
+        }
+        return obj;
+      });
+
       res.json({
         success: true,
-        count: complaints.length,
-        data: complaints,
+        count: safeComplaints.length,
+        data: safeComplaints,
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
@@ -76,7 +100,7 @@ export function createComplaintRouter(io) {
 
   // @route   POST /api/complaints
   // @desc    Lodge a new complaint (Real-time trigger)
-  router.post('/', async (req, res) => {
+  router.post('/', protect, async (req, res) => {
     try {
       const {
         title,
@@ -88,6 +112,15 @@ export function createComplaintRouter(io) {
         citizen,
         attachments = [],
       } = req.body;
+
+      if (!Array.isArray(attachments)) return res.status(400).json({ success: false, message: 'Attachments must be an array.' });
+      if (attachments.length > 5) return res.status(400).json({ success: false, message: 'Maximum 5 attachments allowed.' });
+      for (const att of attachments) {
+         // rough base64 size check (5MB)
+         if (typeof att === 'string' && att.length > 5 * 1024 * 1024 * 1.35) {
+            return res.status(400).json({ success: false, message: 'An attachment exceeds the 5MB size limit.' });
+         }
+      }
 
       const generatedId = await generateComplaintId();
 
@@ -146,7 +179,7 @@ export function createComplaintRouter(io) {
 
   // @route   PATCH /api/complaints/:id/status
   // @desc    Update complaint status (Real-time trigger)
-  router.patch('/:id/status', async (req, res) => {
+  router.patch('/:id/status', protect, authorizeRoles('officer', 'admin'), async (req, res) => {
     try {
       const { id } = req.params;
       const { status, remarks, updatedBy = 'Officer', officerId, officerName } = req.body;
@@ -180,6 +213,17 @@ export function createComplaintRouter(io) {
       });
 
       await complaint.save();
+
+      // Create Audit Log
+      await AuditLog.create({
+        action: 'STATUS_UPDATE',
+        entity: 'Complaint',
+        entityId: complaint.id,
+        performedBy: req.user.email || 'officer',
+        role: req.user.role || 'officer',
+        ipAddress: req.ip,
+        details: { oldStatus: complaint.status, newStatus: status }
+      });
 
       // Create citizen notification
       const notif = await Notification.create({
