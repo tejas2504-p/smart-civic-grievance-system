@@ -1,6 +1,7 @@
 import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Notification from '../models/Notification.js';
+import SLARule from '../models/SLARule.js';
 import AuditLog from '../models/AuditLog.js';
 import ComplaintMessage from '../models/ComplaintMessage.js';
 import { protect, authorizeRoles } from '../middleware/auth.js';
@@ -125,6 +126,14 @@ export function createComplaintRouter(io) {
 
       const generatedId = await generateComplaintId();
 
+      // Fetch SLA configuration for this priority
+      let slaRule = await SLARule.findOne({ priority: priority || 'Medium' });
+      let deadlineHours = 48; // default fallback
+      if (slaRule) {
+        deadlineHours = slaRule.deadlineHours;
+      }
+      const expectedResolutionDate = new Date(Date.now() + deadlineHours * 60 * 60 * 1000);
+
       const complaint = new Complaint({
         id: generatedId,
         title,
@@ -136,6 +145,10 @@ export function createComplaintRouter(io) {
         location: location || { address: '', city: 'Mumbai' },
         citizen: citizen || { name: 'Citizen' },
         attachments,
+        slaDeadline: expectedResolutionDate,
+        slaHoursRemaining: deadlineHours,
+        slaState: 'ACTIVE',
+        expectedResolution: expectedResolutionDate.toISOString(),
         timeline: [
           {
             status: 'Submitted',
@@ -197,6 +210,13 @@ export function createComplaintRouter(io) {
 
       complaint.status = status;
       complaint.updatedDate = new Date();
+
+      if (status === 'Resolved' || status === 'Closed') {
+        complaint.slaState = 'RESOLVED';
+      } else if (complaint.slaState === 'RESOLVED') {
+        // If reopened
+        complaint.slaState = 'ACTIVE';
+      }
 
       if (officerName) {
         complaint.assignedOfficer = {

@@ -93,6 +93,12 @@ export default function TrackComplaintPage() {
                 <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>{result.id}</span>
                 <PriorityBadge priority={result.priority} />
                 <StatusBadge status={result.status} />
+                {result.slaState === 'APPROACHING_DEADLINE' && (
+                  <span className="badge badge-warning" style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 4, background: '#f59e0b', color: '#fff' }}>SLA Warning</span>
+                )}
+                {result.slaState === 'BREACHED' && (
+                  <span className="badge badge-danger" style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 4, background: '#ef4444', color: '#fff' }}>SLA Breached</span>
+                )}
               </div>
               <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.0625rem' }}>{result.title}</h2>
             </div>

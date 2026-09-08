@@ -73,7 +73,20 @@ const complaintSchema = new mongoose.Schema({
   assignedOfficer: { type: mongoose.Schema.Types.Mixed, default: {} },
   slaDeadline: {
     type: Date,
-    default: () => new Date(Date.now() + 48 * 60 * 60 * 1000),
+    default: () => new Date(Date.now() + 48 * 60 * 60 * 1000), // Fallback
+  },
+  slaState: {
+    type: String,
+    enum: ['ACTIVE', 'APPROACHING_DEADLINE', 'BREACHED', 'RESOLVED'],
+    default: 'ACTIVE',
+  },
+  escalationLevel: {
+    type: Number,
+    default: 0,
+  },
+  escalatedTo: {
+    type: String, // could be 'department_head', 'admin'
+    default: null,
   },
   slaHoursRemaining: {
     type: Number,

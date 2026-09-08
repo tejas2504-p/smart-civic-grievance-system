@@ -12,9 +12,11 @@ import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
 import notificationRoutes from './routes/notifications.js';
 import analyticsRoutes from './routes/analytics.js';
+import slaRoutes from './routes/sla.js';
 import jwt from 'jsonwebtoken';
 import User from './models/User.js';
 import { helmetMiddleware } from './middleware/security.js';
+import { initSLACron } from './jobs/slaCron.js';
 
 // Custom NoSQL Injection Protection
 const sanitizeNoSQL = (req, res, next) => {
@@ -151,6 +153,10 @@ app.use('/api/auth', createAuthRouter(io));
 app.use('/api/complaints', createComplaintRouter(io));
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/sla', slaRoutes);
+
+// Initialize SLA Cron Job
+initSLACron(io);
 
 // Root endpoint - Server status & portal navigation
 app.get('/', (req, res) => {
