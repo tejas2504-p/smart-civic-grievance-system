@@ -13,11 +13,8 @@ import {
   Mail, 
   Smartphone, 
   Clock, 
-  KeyRound,
   ShieldCheck,
-  AlertCircle,
   RotateCw,
-  Lock,
   ArrowLeft,
   Check
 } from 'lucide-react';
@@ -90,9 +87,6 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: { state: 'Maharashtra', agreeTerms: false },
   });
-
-  const mobileValue = watch('mobile');
-  const emailValue = watch('email');
 
   // Expiration countdown timer
   useEffect(() => {
@@ -339,7 +333,7 @@ export default function RegisterPage() {
 
       if (res.success && res.data) {
         localStorage.setItem('auth_token', res.data.token);
-        login('citizen', res.data);
+        login(res.data);
         toast.success('🎉 Citizen account created successfully! Welcome to the portal.');
         navigate('/dashboard');
       }

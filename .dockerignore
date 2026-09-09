@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+scratch
+tests
+implementation_plan.md
+README.md

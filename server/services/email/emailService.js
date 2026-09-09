@@ -62,8 +62,11 @@ export async function sendEmail({ to, subject, text, html }) {
   }
 
   // Fallback / Log-only mode if SMTP is not configured
-  console.log(`📧 [Email Service] Email dispatched to ${masked} (Standard transactional channel active).`);
-  return { success: true, status: 'delivered' };
+  console.error(`❌ [Email Service] SMTP is not configured. Email was NOT sent to ${masked}.`);
+  return {
+    success: false,
+    error: 'SMTP email service is not configured'
+  };
 }
 
 /**

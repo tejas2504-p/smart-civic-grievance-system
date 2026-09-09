@@ -22,11 +22,19 @@ export function DataProvider({ children }) {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('portal_complaints', JSON.stringify(complaints));
+    try {
+      localStorage.setItem('portal_complaints', JSON.stringify(complaints));
+    } catch (e) {
+      console.warn('Failed to save complaints to localStorage (quota exceeded).');
+    }
   }, [complaints]);
 
   useEffect(() => {
-    localStorage.setItem('portal_notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('portal_notifications', JSON.stringify(notifications));
+    } catch (e) {
+      console.warn('Failed to save notifications to localStorage (quota exceeded).');
+    }
   }, [notifications]);
 
   // Try loading from Backend Server on mount

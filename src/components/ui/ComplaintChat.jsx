@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getSocket } from '../../lib/socket';
-import { Send, User as UserIcon } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useAuth } from '../../store/AuthContext';
 
 export default function ComplaintChat({ complaintId }) {

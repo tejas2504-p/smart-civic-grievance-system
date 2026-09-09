@@ -6,7 +6,7 @@ import { protect } from '../middleware/auth.js';
 import { createVerificationSession, createEmailVerificationSession, createPhoneVerificationSession, verifyPhoneOTP, verifyEmailOTP, resendOTPs } from '../services/otp/otpService.js';
 import AuditLog from '../models/AuditLog.js';
 import { verifyCaptcha } from '../services/captcha/captchaService.js';
-import { sendSMSOTP, formatIndianPhoneNumber, isValidIndianMobile } from '../services/sms/smsService.js';
+import { sendTwilioVerifyOTP, formatIndianPhoneNumber, isValidIndianMobile } from '../services/sms/smsService.js';
 import { sendEmailOTP } from '../services/email/emailService.js';
 import { sendOtpLimiter, verifyOtpLimiter, resendOtpLimiter, authLimiter } from '../middleware/security.js';
 
@@ -97,8 +97,8 @@ export function createAuthRouter(io) {
       const sessionData = await createVerificationSession(formattedPhone, normalizedEmail, purpose);
       const { verificationId, expiresInSeconds, plaintextPhoneOtp, plaintextEmailOtp } = sessionData;
 
-      // 6. Dispatch real SMS OTP via transactional provider
-      const smsPromise = sendSMSOTP(formattedPhone, plaintextPhoneOtp);
+      // 6. Dispatch real SMS OTP via Twilio Verify
+      const smsPromise = sendTwilioVerifyOTP(formattedPhone);
 
       // 7. Dispatch real Email OTP via Nodemailer SMTP
       const emailPromise = sendEmailOTP(normalizedEmail, plaintextEmailOtp);
@@ -107,6 +107,16 @@ export function createAuthRouter(io) {
 
       const smsOk = smsResult.status === 'fulfilled' && smsResult.value?.success;
       const emailOk = emailResult.status === 'fulfilled' && emailResult.value?.success;
+
+      if (!smsOk || !emailOk) {
+        await OTPVerification.deleteOne({ verificationId });
+        const smsErr = smsResult.status === 'fulfilled' ? smsResult.value?.error : 'Network Error';
+        const emailErr = emailResult.status === 'fulfilled' ? emailResult.value?.error : 'Network Error';
+        return res.status(500).json({
+          success: false,
+          message: !smsOk ? `SMS Failed: ${smsErr || 'Please check config.'}` : `Email Failed: ${emailErr || 'Please check config.'}`
+        });
+      }
 
       // 11. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
       emitSocketEvent('OTP_SENT', {
@@ -189,6 +199,14 @@ export function createAuthRouter(io) {
       
       const emailOk = emailResult[0].status === 'fulfilled' && emailResult[0].value?.success;
 
+      if (!emailOk) {
+        await OTPVerification.deleteOne({ verificationId });
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send Email OTP. Please ensure the email service is correctly configured and try again.'
+        });
+      }
+
       // 6. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
       emitSocketEvent('EMAIL_OTP_SENT', {
         verificationId,
@@ -268,10 +286,19 @@ export function createAuthRouter(io) {
       const sessionData = await createPhoneVerificationSession(formattedPhone, purpose);
       const { verificationId, expiresInSeconds, plaintextPhoneOtp } = sessionData;
 
-      // 5. Dispatch real SMS OTP via Provider (Twilio/Fast2SMS/MSG91)
-      const smsResult = await Promise.allSettled([sendSMSOTP(formattedPhone, plaintextPhoneOtp)]);
+      // 5. Dispatch real SMS OTP via Twilio Verify
+      const smsResult = await Promise.allSettled([sendTwilioVerifyOTP(formattedPhone)]);
       
       const smsOk = smsResult[0].status === 'fulfilled' && smsResult[0].value?.success;
+
+      if (!smsOk) {
+        await OTPVerification.deleteOne({ verificationId });
+        const smsErr = smsResult[0].status === 'fulfilled' ? smsResult[0].value?.error : 'Network Error';
+        return res.status(500).json({
+          success: false,
+          message: `SMS Failed: ${smsErr || 'Please check config.'}`
+        });
+      }
 
       // 6. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)
       emitSocketEvent('PHONE_OTP_SENT', {
@@ -477,11 +504,23 @@ export function createAuthRouter(io) {
       const { session, expiresInSeconds, plaintextPhoneOtp, plaintextEmailOtp, resendsRemaining } = resendResult;
 
       // 4. Dispatch SMS & Email
+      let smsOk = true;
+      let emailOk = true;
+
       if (channel === 'both' || channel === 'phone') {
-        sendSMSOTP(session.phoneNumber, plaintextPhoneOtp);
+        const result = await sendTwilioVerifyOTP(session.phoneNumber);
+        smsOk = result && result.success;
       }
       if (channel === 'both' || channel === 'email') {
-        sendEmailOTP(session.email, plaintextEmailOtp);
+        const result = await sendEmailOTP(session.email, plaintextEmailOtp);
+        emailOk = result && result.success;
+      }
+
+      if (!smsOk || !emailOk) {
+        return res.status(500).json({
+          success: false,
+          message: !smsOk ? 'SMS Failed: The SMS provider rejected the message.' : 'Email Failed: The Email provider rejected the message.'
+        });
       }
 
       // 5. Emit Safe Socket.IO Event (NO OTP DIGITS EXPOSED)

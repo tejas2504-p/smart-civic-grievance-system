@@ -1,5 +1,6 @@
 import OTPVerification from '../../models/OTPVerification.js';
 import { generateSecureOTP, generateVerificationId, hashOTP, verifyOTPHash } from '../crypto/otpCrypto.js';
+import { checkTwilioVerifyOTP } from '../sms/smsService.js';
 
 const EXPIRE_MINUTES = Number(process.env.OTP_EXPIRE_MINUTES) || 5;
 const MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS) || 5;
@@ -146,9 +147,13 @@ export async function verifyPhoneOTP(verificationId, enteredOtp) {
     };
   }
 
-  const isValid = verifyOTPHash(enteredOtp, session.phoneOtpHash);
+  const twilioResult = await checkTwilioVerifyOTP(session.phoneNumber, enteredOtp);
 
-  if (!isValid) {
+  if (!twilioResult.success) {
+    if (twilioResult.error?.includes('credentials')) {
+      throw new Error(`SMS Verification Service Error: ${twilioResult.error}`);
+    }
+
     session.phoneAttempts += 1;
     await session.save();
 

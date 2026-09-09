@@ -13,19 +13,14 @@ import {
   Bell, 
   ChevronRight, 
   Search, 
-  ArrowUpRight,
-  Sparkles,
   MapPin,
   Headphones,
-  Calendar,
-  Filter,
-  ShieldCheck,
-  Radio
+  ShieldCheck
 } from 'lucide-react';
 
 export default function CitizenDashboard() {
   const { user } = useAuth();
-  const { complaints, notifications, isLiveConnected } = useData();
+  const { complaints, notifications } = useData();
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED'
   const [searchQuery, setSearchQuery] = useState('');
   

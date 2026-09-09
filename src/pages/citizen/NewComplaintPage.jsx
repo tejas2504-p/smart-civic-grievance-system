@@ -95,7 +95,6 @@ export default function NewComplaintPage() {
   const [showAI, setShowAI] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const selectedCategory = categories.find(c => c.name === formData.category);
 
   const handleNext = (data) => {
     setFormData(prev => ({ ...prev, ...data }));
@@ -129,7 +128,7 @@ export default function NewComplaintPage() {
       toast.success(`Complaint ${newGrievance.id} submitted successfully!`);
       navigate('/dashboard');
     } catch (err) {
-      toast.error('Could not submit complaint. Please try again.');
+      toast.error(err.message || 'Could not submit complaint. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -301,9 +300,7 @@ function Step1Form({ onNext, initial }) {
     category: z.string().min(1, 'Please select a category'),
     subcategory: z.string().optional(),
   });
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
-  const watchCat = watch('category');
-  const selectedCat = categories.find(c => c.name === watchCat);
+  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>

@@ -3,6 +3,7 @@
  * Supports Twilio, Fast2SMS, MSG91, and Custom Indian SMS Gateways.
  * OTP digits are NEVER logged to console or public logs.
  */
+import twilio from 'twilio';
 
 /**
  * Standardize Indian Phone Number to +91XXXXXXXXXX format.
@@ -69,31 +70,19 @@ export async function sendSMS(phoneNumber, message) {
       const authToken = process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.TWILIO_PHONE_NUMBER || process.env.SMS_SENDER_ID;
 
-      const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-      const authHeader = 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+      const client = twilio(accountSid, authToken);
 
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', fromNumber);
-      formData.append('Body', message);
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-        signal: controller.signal
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        console.log(`📱 [SMS Service (Twilio)] SMS dispatched successfully to ${maskedPhone} [SID: ${data.sid}]`);
-        return { success: true, provider: 'twilio', messageId: data.sid };
-      } else {
-        console.error(`❌ [SMS Service (Twilio) Error]: ${data.message}`);
-        return { success: false, error: data.message };
+      try {
+        const messageResponse = await client.messages.create({
+          body: message,
+          from: fromNumber,
+          to: formattedPhone
+        });
+        console.log(`📱 [SMS Service (Twilio)] SMS dispatched successfully to ${maskedPhone} [SID: ${messageResponse.sid}]`);
+        return { success: true, provider: 'twilio', messageId: messageResponse.sid };
+      } catch (err) {
+        console.error(`❌ [SMS Service (Twilio) Error]: ${err.message}`);
+        return { success: false, error: err.message };
       }
     }
 
@@ -176,10 +165,56 @@ export async function sendPhoneOTP(phoneNumber, otp) {
   return await sendSMS(phoneNumber, smsBody);
 }
 
-/**
- * Deprecated alias to maintain compatibility with older routes
- * until fully refactored.
- */
 export async function sendSMSOTP(phoneNumber, otp) {
   return await sendPhoneOTP(phoneNumber, otp);
+}
+
+export async function sendTwilioVerifyOTP(phoneNumber) {
+  const formattedPhone = formatIndianPhoneNumber(phoneNumber);
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+  if (!accountSid || !authToken || !serviceSid) {
+    return { success: false, error: 'Twilio Verify credentials are not configured in .env (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID)' };
+  }
+
+  const client = twilio(accountSid, authToken);
+
+  try {
+    const verification = await client.verify.v2.services(serviceSid)
+      .verifications.create({ to: formattedPhone, channel: 'sms' });
+    console.log(`📱 [Twilio Verify] SMS OTP sent successfully to ${formattedPhone} [Status: ${verification.status}]`);
+    return { success: true, status: verification.status };
+  } catch (err) {
+    console.error(`❌ [Twilio Verify Send Error]:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function checkTwilioVerifyOTP(phoneNumber, code) {
+  const formattedPhone = formatIndianPhoneNumber(phoneNumber);
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+  if (!accountSid || !authToken || !serviceSid) {
+    return { success: false, error: 'Twilio Verify credentials are not configured in .env (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID)' };
+  }
+
+  const client = twilio(accountSid, authToken);
+  try {
+    const verificationCheck = await client.verify.v2.services(serviceSid)
+      .verificationChecks.create({ to: formattedPhone, code });
+    
+    if (verificationCheck.status === 'approved') {
+      console.log(`✅ [Twilio Verify] SMS OTP approved for ${formattedPhone}`);
+      return { success: true, status: 'approved' };
+    }
+    console.warn(`⚠️ [Twilio Verify] SMS OTP rejected for ${formattedPhone} [Status: ${verificationCheck.status}]`);
+    return { success: false, error: 'Invalid or expired OTP' };
+  } catch (err) {
+    console.error(`❌ [Twilio Verify Check Error]:`, err.message);
+    return { success: false, error: err.message };
+  }
 }

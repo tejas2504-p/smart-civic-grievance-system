@@ -1,11 +1,12 @@
 import express from 'express';
 import Complaint from '../models/Complaint.js';
+import { protect, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // @route   GET /api/analytics/overview
 // @desc    Get portal stats & department metrics
-router.get('/overview', async (req, res) => {
+router.get('/overview', protect, authorizeRoles('officer', 'admin'), async (req, res) => {
   try {
     const total = await Complaint.countDocuments();
     const resolved = await Complaint.countDocuments({ status: { $in: ['Resolved', 'Closed'] } });
@@ -45,7 +46,7 @@ router.get('/overview', async (req, res) => {
 
 // @route   GET /api/analytics/sla
 // @desc    Get SLA compliance and breach statistics
-router.get('/sla', async (req, res) => {
+router.get('/sla', protect, authorizeRoles('officer', 'admin'), async (req, res) => {
   try {
     const total = await Complaint.countDocuments();
     const breached = await Complaint.countDocuments({ slaState: 'BREACHED' });
@@ -85,7 +86,7 @@ router.get('/sla', async (req, res) => {
 
 // @route   GET /api/analytics/trends
 // @desc    Get complaint trends over time
-router.get('/trends', async (req, res) => {
+router.get('/trends', protect, authorizeRoles('officer', 'admin'), async (req, res) => {
   try {
     const { period = 'monthly' } = req.query; // daily, weekly, monthly, yearly
     
@@ -127,8 +128,8 @@ router.get('/trends', async (req, res) => {
 });
 
 // @route   GET /api/analytics/locations
-// @desc    Get complaint geographical distribution
-router.get('/locations', async (req, res) => {
+// @desc    Get complaint geographical distribution (Admin/Officer only for full details)
+router.get('/locations', protect, authorizeRoles('officer', 'admin'), async (req, res) => {
   try {
     const locations = await Complaint.aggregate([
       { $match: { 'location.lat': { $exists: true }, 'location.lng': { $exists: true } } },

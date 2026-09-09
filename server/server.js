@@ -160,46 +160,54 @@ app.use('/api/reports', reportsRoutes);
 // Initialize SLA Cron Job
 initSLACron(io);
 
-// Root endpoint - Server status & portal navigation
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Smart Government Grievance API Server</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b1a2e; color: #f8fafc; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { background: #132742; border: 1px solid #1e3a5f; border-radius: 12px; padding: 32px 28px; max-width: 520px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; }
-        .badge { background: #10B981; color: #064e3b; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; margin-bottom: 16px; }
-        h1 { font-size: 22px; margin: 0 0 8px; color: #ffffff; }
-        p { font-size: 14px; color: #94a3b8; margin: 0 0 24px; line-height: 1.5; }
-        .btn-portal { display: block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; margin-bottom: 16px; transition: background 0.2s; }
-        .btn-portal:hover { background: #1d4ed8; }
-        .links { border-top: 1px solid #1e3a5f; padding-top: 16px; display: flex; justify-content: center; gap: 16px; font-size: 13px; }
-        .links a { color: #60a5fa; text-decoration: none; }
-        .links a:hover { text-decoration: underline; }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <span class="badge">● API SERVER RUNNING</span>
-        <h1>Smart Grievance Portal Backend</h1>
-        <p>This is the REST API & WebSockets server running on port <strong>5000</strong>. The user-facing web portal application is running on port <strong>5173</strong>.</p>
-        <a href="http://localhost:5173" class="btn-portal">🚀 Open Web Portal (http://localhost:5173)</a>
-        <div class="links">
-          <a href="/api/health">System Health Check</a>
-          <span style="color:#475569">•</span>
-          <a href="http://localhost:5173/login">Citizen Login</a>
-          <span style="color:#475569">•</span>
-          <a href="http://localhost:5173/register">Register</a>
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  });
+} else {
+  // Root endpoint - Server status & portal navigation (Development)
+  app.get('/', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Smart Government Grievance API Server</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b1a2e; color: #f8fafc; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+          .card { background: #132742; border: 1px solid #1e3a5f; border-radius: 12px; padding: 32px 28px; max-width: 520px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; }
+          .badge { background: #10B981; color: #064e3b; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; margin-bottom: 16px; }
+          h1 { font-size: 22px; margin: 0 0 8px; color: #ffffff; }
+          p { font-size: 14px; color: #94a3b8; margin: 0 0 24px; line-height: 1.5; }
+          .btn-portal { display: block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; margin-bottom: 16px; transition: background 0.2s; }
+          .btn-portal:hover { background: #1d4ed8; }
+          .links { border-top: 1px solid #1e3a5f; padding-top: 16px; display: flex; justify-content: center; gap: 16px; font-size: 13px; }
+          .links a { color: #60a5fa; text-decoration: none; }
+          .links a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <span class="badge">● API SERVER RUNNING</span>
+          <h1>Smart Grievance Portal Backend</h1>
+          <p>This is the REST API & WebSockets server running on port <strong>5000</strong>. The user-facing web portal application is running on port <strong>5173</strong>.</p>
+          <a href="http://localhost:5173" class="btn-portal">🚀 Open Web Portal (http://localhost:5173)</a>
+          <div class="links">
+            <a href="/api/health">System Health Check</a>
+            <span style="color:#475569">•</span>
+            <a href="http://localhost:5173/login">Citizen Login</a>
+            <span style="color:#475569">•</span>
+            <a href="http://localhost:5173/register">Register</a>
+          </div>
         </div>
-      </div>
-    </body>
-    </html>
-  `);
-});
+      </body>
+      </html>
+    `);
+  });
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

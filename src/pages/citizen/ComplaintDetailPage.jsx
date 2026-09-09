@@ -1,9 +1,9 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { complaints } from '../../data/mockData';
-import { StatusBadge, PriorityBadge, Breadcrumb, Alert } from '../../components/ui/SharedComponents';
+import { StatusBadge, PriorityBadge, Breadcrumb } from '../../components/ui/SharedComponents';
 import { formatDate, formatDateTime } from '../../lib/utils';
-import { MapPin, Calendar, User, Clock, Send, CheckCircle, AlertTriangle, Download, RotateCcw, Sparkles } from 'lucide-react';
+import { MapPin, User, Clock, Send, CheckCircle, AlertTriangle, Download, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Lazy load map to avoid SSR issues

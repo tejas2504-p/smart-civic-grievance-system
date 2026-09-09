@@ -8,8 +8,7 @@ import {
   Eye, 
   EyeOff, 
   Clock, 
-  ArrowLeft,
-  RotateCw
+  ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '../../components/ui/SharedComponents';
