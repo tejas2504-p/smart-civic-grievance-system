@@ -42,7 +42,17 @@ import SettingsPage from './pages/admin/SettingsPage';
 
 // Protected route wrapper
 function ProtectedRoute({ children, allowedRoles }) {
-  const { user, role } = useAuth();
+  const { user, role, loading } = useAuth();
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{ margin: '0 auto 16px', width: 36, height: 36, border: '3px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(role)) {
     if (role === 'admin') return <Navigate to="/admin" replace />;

@@ -63,7 +63,7 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(passwordLoginSchema),
     defaultValues: { credential: '', password: '', rememberMe: false },
   });
@@ -83,7 +83,7 @@ export default function LoginPage() {
       const res = await api.login({
         email: data.credential,
         password: data.password,
-        captchaToken: token || passwordCaptchaToken || '1x0000000000000000000000000000000AA',
+        captchaToken: token || passwordCaptchaToken,
       });
 
       if (res.success && res.data) {
@@ -106,7 +106,7 @@ export default function LoginPage() {
 
   // 2. Request OTP to Email or Mobile with Server-Side CAPTCHA
   const handleSendOTP = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setOtpCaptchaError('');
 
     if (!otpTarget.trim()) {
@@ -133,17 +133,23 @@ export default function LoginPage() {
     setOtpLoading(true);
     try {
       const payload = {
-        phone: otpChannel === 'mobile' ? otpTarget.trim() : '9876543210',
-        email: otpChannel === 'email' ? otpTarget.trim() : `${otpTarget.trim().replace(/\D/g, '')}@citizen.mh.gov.in`,
-        captchaToken: token || otpCaptchaToken || '1x0000000000000000000000000000000AA',
         purpose: 'login',
+        captchaToken: token || otpCaptchaToken,
       };
+
+      if (otpChannel === 'email') {
+        payload.email = otpTarget.trim().toLowerCase();
+        payload.channel = 'email';
+      } else {
+        payload.phone = otpTarget.trim();
+        payload.channel = 'phone';
+      }
 
       const res = await api.sendOTP(payload);
       if (res.success && res.verificationId) {
         setVerificationId(res.verificationId);
         setOtpSent(true);
-        setCountdown(45);
+        setCountdown(res.expiresIn ? Math.min(res.expiresIn, 60) : 60);
 
         toast.success(`🔐 Security OTP dispatched to your ${otpChannel === 'email' ? 'Email' : 'Mobile Number'}!`);
       }
@@ -178,7 +184,9 @@ export default function LoginPage() {
           localStorage.setItem('auth_token', loginRes.data.token);
           login(loginRes.data.role || 'citizen', loginRes.data);
           toast.success('Signed in successfully with verified OTP!');
-          navigate('/dashboard');
+          if (loginRes.data.role === 'officer') navigate('/officer');
+          else if (loginRes.data.role === 'admin') navigate('/admin');
+          else navigate('/dashboard');
         }
       }
     } catch (err) {
@@ -232,7 +240,7 @@ export default function LoginPage() {
                 }}
               >
                 <Lock size={15} />
-                <span>Password</span>
+                <span>Login with Password</span>
               </button>
 
               <button
@@ -424,7 +432,7 @@ export default function LoginPage() {
                         style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.925rem', fontWeight: 700 }}
                         disabled={otpLoading}
                       >
-                        {otpLoading ? <><Spinner size={16} /> Verifying & Dispatching OTP…</> : 'Send Verification OTP'}
+                        {otpLoading ? <><Spinner size={16} /> Verifying & Dispatching OTP…</> : 'Send OTP'}
                       </button>
                     </form>
                   ) : (
@@ -437,7 +445,7 @@ export default function LoginPage() {
 
                       <div style={{ marginBottom: 16 }}>
                         <label className="form-label" htmlFor="otp-code">
-                          Enter 6-Digit Verification Code <span className="required" aria-hidden="true">*</span>
+                          Enter OTP <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>(6-Digit Verification Code)</span> <span className="required" aria-hidden="true">*</span>
                         </label>
                         <input
                           id="otp-code"
@@ -473,7 +481,7 @@ export default function LoginPage() {
                             textDecoration: 'underline',
                           }}
                         >
-                          Resend Code
+                          Resend OTP
                         </button>
                       </div>
 
@@ -500,12 +508,66 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Quick Role Fill Shortcuts */}
+            <div style={{ padding: '12px 20px', background: '#F8FAFC', borderTop: '1px solid var(--color-border)', fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 650, color: 'var(--color-primary)', marginBottom: 6 }}>
+                <span>Quick Role Credentials (Click to Autofill):</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('password');
+                    setValue('credential', 'admin@gov.in');
+                    setValue('password', 'Admin@123');
+                  }}
+                  style={{
+                    padding: '8px',
+                    borderRadius: 6,
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '0.72rem',
+                    color: '#0f172a',
+                    transition: 'border-color 0.15s',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#1e3a8a' }}>🏛️ Administrator</div>
+                  <div style={{ color: '#64748b', fontSize: '0.68rem' }}>admin@gov.in</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('password');
+                    setValue('credential', 'officer@gov.in');
+                    setValue('password', 'Officer@123');
+                  }}
+                  style={{
+                    padding: '8px',
+                    borderRadius: 6,
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '0.72rem',
+                    color: '#0f172a',
+                    transition: 'border-color 0.15s',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#047857' }}>🛡️ Field Officer</div>
+                  <div style={{ color: '#64748b', fontSize: '0.68rem' }}>officer@gov.in</div>
+                </button>
+              </div>
+            </div>
+
             {/* Card Footer */}
             <div style={{ padding: '16px 28px', borderTop: '1px solid var(--color-border)', background: 'var(--color-bg)', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                New citizen?{' '}
+                Don't have an account?{' '}
                 <Link to="/register" style={{ color: 'var(--color-secondary)', fontWeight: 700, textDecoration: 'none' }}>
-                  Create Account
+                  Register
                 </Link>
               </p>
             </div>

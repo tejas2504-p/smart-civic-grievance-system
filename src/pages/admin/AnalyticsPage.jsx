@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { complaintsOverTime, complaintsByCategory, resolutionRate } from '../../data/mockData';
+import api from '../../lib/api';
+import { complaintsOverTime, complaintsByCategory as mockCat, resolutionRate as mockRate } from '../../data/mockData';
 import {
   AreaChart, Area, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -24,7 +25,34 @@ function KPICard({ label, value, trend, unit = '' }) {
 }
 
 export default function AnalyticsPage() {
-  const radarData = resolutionRate.map(d => ({ dept: d.dept, Resolution: d.rate, Target: 90 }));
+  const [analytics, setAnalytics] = useState({
+    resolutionRate: 79,
+    categoryData: mockCat,
+    departmentData: mockRate,
+  });
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.getAnalytics();
+        if (res?.success && res.data) {
+          const d = res.data;
+          setAnalytics({
+            resolutionRate: d.resolutionRate || 79,
+            categoryData: d.categoryStats && d.categoryStats.length > 0
+              ? d.categoryStats.map(c => ({ name: c._id || 'General', value: c.count }))
+              : mockCat,
+            departmentData: mockRate,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load analytics:', err);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
+  const radarData = analytics.departmentData.map(d => ({ dept: d.dept, Resolution: d.rate, Target: 90 }));
 
   return (
     <div>
@@ -87,7 +115,7 @@ export default function AnalyticsPage() {
         <h2 className="section-title" style={{ marginBottom: 4 }}>Complaints by Category</h2>
         <p className="section-subtitle" style={{ marginBottom: 16 }}>Volume distribution across issue categories</p>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={complaintsByCategory} margin={{ left: -10 }}>
+          <BarChart data={analytics.categoryData} margin={{ left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />

@@ -107,29 +107,26 @@ export default function NewComplaintPage() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      const catObj = categories.find(c => c.name === formData.category);
+      const targetDepartment = formData.department || catObj?.department || 'General Administration';
+
       const newGrievance = await addComplaint({
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        department: formData.department || 'Road Maintenance',
-        priority: formData.priority || 'Medium',
+        department: targetDepartment,
+        priority: formData.priority || catObj?.defaultPriority || 'Medium',
         location: {
           address: formData.address || '',
           city: formData.city || 'Mumbai',
           pincode: formData.pincode || '',
           coordinates: formData.coords ? { lat: Number(formData.coords.lat), lng: Number(formData.coords.lng) } : { lat: 19.076, lng: 72.8777 },
         },
-        citizen: {
-          id: user?.id || 'citizen_1',
-          name: user?.name || 'Citizen User',
-          phone: user?.phone || '',
-          email: user?.email || '',
-        },
       });
-      toast.success(`Complaint ${newGrievance.id} submitted successfully!`);
+      toast.success(`Grievance ${newGrievance.id} lodged successfully!`);
       navigate('/dashboard');
     } catch (err) {
-      toast.error('Could not submit complaint. Please try again.');
+      toast.error(err.message || 'Could not submit complaint. Please try again.');
     } finally {
       setSubmitting(false);
     }

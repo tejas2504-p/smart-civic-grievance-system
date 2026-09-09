@@ -11,6 +11,8 @@ import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
 import analyticsRoutes from './routes/analytics.js';
 import { helmetMiddleware } from './middleware/security.js';
+import jwt from 'jsonwebtoken';
+import User from './models/User.js';
 
 // Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +32,24 @@ const io = new Server(server, {
   },
 });
 
+// Socket.IO Authentication Middleware
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026');
+      const user = await User.findById(decoded.id).select('_id name role department');
+      if (user) {
+        socket.user = user;
+      }
+    }
+    next();
+  } catch (err) {
+    // allow connection for public tracking/OTP
+    next();
+  }
+});
+
 // Security & Standard Middleware
 app.use(helmetMiddleware);
 app.use(cors());
@@ -43,16 +63,62 @@ connectDB();
 io.on('connection', (socket) => {
   console.log(`⚡ [Socket.IO] Client connected: ${socket.id}`);
 
-  // Join citizen room for targeted notifications
-  socket.on('join_user', (userId) => {
+  // Automatically join rooms for authenticated socket
+  if (socket.user) {
+    const userId = socket.user._id.toString();
+    socket.join(`user:${userId}`);
     socket.join(`user_${userId}`);
-    console.log(`👤 Client ${socket.id} joined user_${userId}`);
+    console.log(`👤 Client ${socket.id} joined authenticated room user:${userId}`);
+
+    if (socket.user.role === 'admin') {
+      socket.join('role:admin');
+    } else if (socket.user.role === 'officer') {
+      socket.join('role:officer');
+      socket.join(`officer:${userId}`);
+      if (socket.user.department) {
+        socket.join(`dept:${socket.user.department}`);
+      }
+    }
+  }
+
+  // Allow client to authenticate after connect without reconnecting
+  socket.on('authenticate', async (token) => {
+    try {
+      if (!token) return;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026');
+      const user = await User.findById(decoded.id).select('_id name role department');
+      if (user) {
+        socket.user = user;
+        const userId = user._id.toString();
+        socket.join(`user:${userId}`);
+        socket.join(`user_${userId}`);
+        if (user.role === 'admin') socket.join('role:admin');
+        if (user.role === 'officer') {
+          socket.join('role:officer');
+          socket.join(`officer:${userId}`);
+          if (user.department) socket.join(`dept:${user.department}`);
+        }
+        console.log(`🔐 Client ${socket.id} authenticated as user:${userId}`);
+        socket.emit('authenticated', { success: true, userId, role: user.role });
+      }
+    } catch (e) {
+      socket.emit('authenticated', { success: false, error: 'Invalid token' });
+    }
   });
 
-  // Join officer / department room
-  socket.on('join_department', (deptName) => {
-    socket.join(`dept_${deptName}`);
-    console.log(`🏢 Client ${socket.id} joined dept_${deptName}`);
+  // Client leaving room on logout
+  socket.on('logout', () => {
+    if (socket.user) {
+      const userId = socket.user._id.toString();
+      socket.leave(`user:${userId}`);
+      socket.leave(`user_${userId}`);
+      socket.leave('role:admin');
+      socket.leave('role:officer');
+      socket.leave(`officer:${userId}`);
+      if (socket.user.department) socket.leave(`dept:${socket.user.department}`);
+      socket.user = null;
+      console.log(`🚪 Client ${socket.id} logged out of socket rooms`);
+    }
   });
 
   // Join specific verification room for real-time OTP status sync

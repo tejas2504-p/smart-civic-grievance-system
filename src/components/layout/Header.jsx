@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
+import { useData } from '../../store/DataContext';
 import {
   Bell, Search, ChevronDown, Globe,
   LogOut, User, Menu, X, Settings, Headphones
 } from 'lucide-react';
-import { notifications as mockNotifs } from '../../data/mockData';
 import AdMarquee from './AdMarquee';
 import ScreenReaderModal from './ScreenReaderModal';
 
@@ -14,6 +14,7 @@ import ScreenReaderModal from './ScreenReaderModal';
 export default function Header({ onMenuToggle, sidebarOpen }) {
   const { t, i18n } = useTranslation();
   const { user, role, logout } = useAuth();
+  const { notifications = [] } = useData();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLang, setShowLang] = useState(false);
@@ -24,7 +25,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
   const [searchVal, setSearchVal] = useState('');
   const [fontSizeLevel, setFontSizeLevel] = useState(1); // 0: small, 1: normal, 2: large
 
-  const unread = mockNotifs.filter(n => !n.read).length;
+  const unread = notifications.filter(n => !n.read).length;
 
   const langOptions = [
     { code: 'en', label: 'English' },
@@ -472,26 +473,29 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                   </Link>
                 </div>
                 <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-                  {mockNotifs.slice(0, 4).map(n => (
-                    <div
-                      key={n.id}
-                      style={{
-                        padding: '10px 16px',
-                        borderBottom: '1px solid var(--color-border)',
-                        background: n.read ? 'transparent' : '#f0f7ff',
-                      }}
-                    >
-                      <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 2 }}>
-                        {n.title}
-                      </p>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
-                        {n.message}
-                      </p>
-                      <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
-                        {n.date} · {n.time}
-                      </p>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                      No notifications
                     </div>
-                  ))}
+                  ) : (
+                    notifications.slice(0, 4).map((n, i) => (
+                      <div
+                        key={n._id || n.id || i}
+                        style={{
+                          padding: '10px 16px',
+                          borderBottom: '1px solid var(--color-border)',
+                          background: n.read ? 'transparent' : '#f0f7ff',
+                        }}
+                      >
+                        <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 2 }}>
+                          {n.title}
+                        </p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+                          {n.message}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

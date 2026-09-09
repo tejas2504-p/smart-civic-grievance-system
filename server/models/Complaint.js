@@ -25,6 +25,12 @@ const timelineEventSchema = new mongoose.Schema({
 });
 
 const complaintSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   id: {
     type: String,
     required: true,
@@ -94,6 +100,9 @@ const complaintSchema = new mongoose.Schema({
   expectedResolution: { type: String, default: '' },
   lastUpdated: { type: String, default: '' },
 }, { strict: false, timestamps: true });
+
+complaintSchema.index({ userId: 1, createdAt: -1 });
+complaintSchema.index({ department: 1, status: 1 });
 
 export default mongoose.models.Complaint || mongoose.model('Complaint', complaintSchema);
 

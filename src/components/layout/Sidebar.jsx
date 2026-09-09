@@ -2,13 +2,13 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
+import { useData } from '../../store/DataContext';
 import {
   LayoutDashboard, FileText, PlusCircle, Bell, User,
   BarChart2, Building2, Users, Tag, Clock, Settings,
   HelpCircle, MessageSquare, ChevronLeft, ChevronRight,
   MapPin, FileBarChart, LogOut
 } from 'lucide-react';
-import { notifications as mockNotifs } from '../../data/mockData';
 
 const citizenNav = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
@@ -68,8 +68,9 @@ function NavItem({ item, collapsed, unread }) {
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
   const { t } = useTranslation();
   const { role, user, logout } = useAuth();
+  const { notifications = [] } = useData();
   const navigate = useNavigate();
-  const unread = mockNotifs.filter(n => !n.read).length;
+  const unread = notifications.filter(n => !n.read).length;
 
   const navItems = role === 'admin' ? adminNav : role === 'officer' ? officerNav : citizenNav;
 

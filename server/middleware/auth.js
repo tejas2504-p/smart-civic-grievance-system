@@ -15,9 +15,12 @@ export async function protect(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026');
     req.user = await User.findById(decoded.id).select('-password');
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'User belonging to this token no longer exists' });
+    }
     next();
   } catch (error) {
-    return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+    return res.status(401).json({ success: false, message: 'Not authorized, token invalid or expired' });
   }
 }
 

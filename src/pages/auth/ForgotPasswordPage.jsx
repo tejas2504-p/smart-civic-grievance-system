@@ -72,11 +72,15 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       const payload = {
-        phone: channel === 'mobile' ? target.trim() : '9876543210',
-        email: channel === 'email' ? target.trim() : `${target.trim().replace(/\D/g, '')}@citizen.mh.gov.in`,
-        captchaToken: token || captchaToken || '1x0000000000000000000000000000000AA',
         purpose: 'password_reset',
+        captchaToken: token || captchaToken,
+        channel: channel === 'email' ? 'email' : 'phone',
       };
+      if (channel === 'email') {
+        payload.email = target.trim().toLowerCase();
+      } else {
+        payload.phone = target.trim();
+      }
 
       const res = await api.sendOTP(payload);
       if (res.success && res.verificationId) {

@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/AuthContext';
+import { useData } from '../../store/DataContext';
 import { toast } from 'sonner';
 import { User, Phone, Mail, MapPin, Lock, Eye, EyeOff, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, role } = useAuth();
+  const { stats, complaints } = useData();
   const [editMode, setEditMode] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
+
+  const totalCount = stats?.total ?? complaints.length;
+  const resolvedCount = stats?.resolved ?? complaints.filter(c => ['Resolved', 'Closed'].includes(c.status)).length;
 
   const handleSave = () => {
     toast.success('Profile updated successfully.');
@@ -41,27 +46,22 @@ export default function ProfilePage() {
             <h2 style={{ fontWeight: 700, fontSize: '1.0625rem', marginBottom: 4 }}>{user?.name}</h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 8 }}>{user?.email}</p>
             <span className="badge status-resolved" style={{ textTransform: 'capitalize' }}>{role}</span>
-            {editMode && (
-              <button className="btn btn-outline btn-sm" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}>
-                Change Photo
-              </button>
-            )}
           </div>
 
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px' }}>
             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>Account</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
-                <span style={{ color: 'var(--color-text-secondary)' }}>Member since</span>
-                <span>Jan 2025</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Status</span>
+                <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Active</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
                 <span style={{ color: 'var(--color-text-secondary)' }}>Total Complaints</span>
-                <span>4</span>
+                <span style={{ fontWeight: 700 }}>{totalCount}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
                 <span style={{ color: 'var(--color-text-secondary)' }}>Resolved</span>
-                <span style={{ color: 'var(--color-success)' }}>1</span>
+                <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>{resolvedCount}</span>
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
               {[
                 { label: 'Full Name', id: 'pf-name', type: 'text', value: user?.name, icon: User },
-                { label: 'Mobile Number', id: 'pf-mobile', type: 'tel', value: user?.mobile, icon: Phone },
+                { label: 'Mobile Number', id: 'pf-mobile', type: 'tel', value: user?.phone || user?.mobile, icon: Phone },
                 { label: 'Email Address', id: 'pf-email', type: 'email', value: user?.email, icon: Mail },
                 { label: 'Address', id: 'pf-addr', type: 'text', value: user?.address, icon: MapPin },
                 { label: 'City', id: 'pf-city', type: 'text', value: user?.city, icon: null },

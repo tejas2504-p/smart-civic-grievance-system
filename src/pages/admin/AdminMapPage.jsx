@@ -1,5 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { complaints } from '../../data/mockData';
+import { useData } from '../../store/DataContext';
 import { PriorityBadge, StatusBadge } from '../../components/ui/SharedComponents';
 const MapSection = lazy(() => import('../../components/maps/MapSection'));
 
@@ -7,11 +7,12 @@ const PRIORITY_FILTERS = ['All', 'Critical', 'High', 'Medium', 'Low'];
 const STATUS_FILTERS = ['All', 'In Progress', 'Resolved', 'Submitted', 'Under Review'];
 
 export default function AdminMapPage() {
+  const { complaints } = useData();
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
-  const filtered = complaints.filter(c =>
+  const filtered = (complaints || []).filter(c =>
     (priorityFilter === 'All' || c.priority === priorityFilter) &&
     (statusFilter === 'All' || c.status === statusFilter)
   );

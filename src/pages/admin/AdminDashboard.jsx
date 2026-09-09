@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { adminStats, complaintsByCategory, complaintsByDept, complaintsOverTime, resolutionRate } from '../../data/mockData';
+import api from '../../lib/api';
+import { adminStats, complaintsByCategory as mockCat, complaintsByDept as mockDept, complaintsOverTime, resolutionRate } from '../../data/mockData';
 import { StatCard } from '../../components/ui/SharedComponents';
 import { FileText, Clock, CheckCircle, AlertCircle, AlertTriangle, TrendingUp, Building2, Users } from 'lucide-react';
 
@@ -25,6 +26,55 @@ function ChartCard({ title, subtitle, children }) {
 const tooltipStyle = { fontSize: '0.8125rem', border: '1px solid var(--color-border)', borderRadius: 6 };
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    total: adminStats.totalComplaints,
+    today: adminStats.todayComplaints,
+    pending: adminStats.pending,
+    resolved: adminStats.resolved,
+    critical: adminStats.critical,
+    slaBreach: adminStats.slaBreach,
+    departments: adminStats.departments,
+    officers: adminStats.officers,
+    categoryData: mockCat,
+    deptData: mockDept,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.getAnalytics();
+        if (res?.success && res.data) {
+          const d = res.data;
+          const catData = d.categoryStats && d.categoryStats.length > 0
+            ? d.categoryStats.map(c => ({ name: c._id || 'General', value: c.count }))
+            : mockCat;
+
+          const deptData = d.departmentStats && d.departmentStats.length > 0
+            ? d.departmentStats.map(dp => ({ name: dp._id?.split(' ')[0] || 'Dept', complaints: dp.count, resolved: 0 }))
+            : mockDept;
+
+          setStats({
+            total: d.total ?? adminStats.totalComplaints,
+            today: d.today ?? adminStats.todayComplaints,
+            pending: d.pending ?? adminStats.pending,
+            resolved: d.resolved ?? adminStats.resolved,
+            critical: d.critical ?? adminStats.critical,
+            slaBreach: adminStats.slaBreach,
+            departments: d.departmentStats?.length || adminStats.departments,
+            officers: adminStats.officers,
+            categoryData: catData,
+            deptData: deptData,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load admin analytics:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
@@ -34,14 +84,14 @@ export default function AdminDashboard() {
 
       {/* KPI Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Complaints" value={adminStats.totalComplaints.toLocaleString()} icon={FileText} iconBg="#e8f4fd" iconColor="var(--color-secondary)" />
-        <StatCard label="Today's Complaints" value={adminStats.todayComplaints} icon={TrendingUp} iconBg="#fff3e0" iconColor="var(--color-warning)" trend={{ up: true, label: '+12% vs yesterday' }} />
-        <StatCard label="Pending" value={adminStats.pending.toLocaleString()} icon={Clock} iconBg="#fff3e0" iconColor="var(--color-warning)" />
-        <StatCard label="Resolved" value={adminStats.resolved.toLocaleString()} icon={CheckCircle} iconBg="var(--color-success-light)" iconColor="var(--color-success)" />
-        <StatCard label="Critical" value={adminStats.critical} icon={AlertCircle} iconBg="var(--color-danger-light)" iconColor="var(--color-danger)" />
-        <StatCard label="SLA Breached" value={adminStats.slaBreach} icon={AlertTriangle} iconBg="#fce4ec" iconColor="#880e4f" />
-        <StatCard label="Departments" value={adminStats.departments} icon={Building2} iconBg="#e8eaf6" iconColor="#3f51b5" />
-        <StatCard label="Officers" value={adminStats.officers} icon={Users} iconBg="#e0f2f1" iconColor="#00796b" />
+        <StatCard label="Total Complaints" value={stats.total.toLocaleString()} icon={FileText} iconBg="#e8f4fd" iconColor="var(--color-secondary)" />
+        <StatCard label="Today's Complaints" value={stats.today} icon={TrendingUp} iconBg="#fff3e0" iconColor="var(--color-warning)" trend={{ up: true, label: '+12% vs yesterday' }} />
+        <StatCard label="Pending" value={stats.pending.toLocaleString()} icon={Clock} iconBg="#fff3e0" iconColor="var(--color-warning)" />
+        <StatCard label="Resolved" value={stats.resolved.toLocaleString()} icon={CheckCircle} iconBg="var(--color-success-light)" iconColor="var(--color-success)" />
+        <StatCard label="Critical" value={stats.critical} icon={AlertCircle} iconBg="var(--color-danger-light)" iconColor="var(--color-danger)" />
+        <StatCard label="SLA Breached" value={stats.slaBreach} icon={AlertTriangle} iconBg="#fce4ec" iconColor="#880e4f" />
+        <StatCard label="Departments" value={stats.departments} icon={Building2} iconBg="#e8eaf6" iconColor="#3f51b5" />
+        <StatCard label="Officers" value={stats.officers} icon={Users} iconBg="#e0f2f1" iconColor="#00796b" />
       </div>
 
       {/* Charts row 1 */}
@@ -63,8 +113,8 @@ export default function AdminDashboard() {
         <ChartCard title="Complaints by Category" subtitle="Distribution across issue types">
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={complaintsByCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
-                {complaintsByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              <Pie data={stats.categoryData} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
+                {stats.categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
               <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [v, n]} />
             </PieChart>
@@ -76,7 +126,7 @@ export default function AdminDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
         <ChartCard title="Complaints by Department" subtitle="Total vs resolved per department">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={complaintsByDept} margin={{ top: 0, right: 8, bottom: 0, left: -10 }}>
+            <BarChart data={stats.deptData} margin={{ top: 0, right: 8, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 12 }} />

@@ -1,47 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { complaints } from '../../data/mockData';
+import { api } from '../../lib/api';
 import { StatusBadge, PriorityBadge, Breadcrumb, Modal, ConfirmModal, Alert } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
-import { CheckCircle, Send, AlertTriangle, ArrowUpCircle, MessageSquare, PlusCircle, Sparkles, User, Phone, Mail, MapPin } from 'lucide-react';
-import { Suspense, lazy } from 'react';
-const MapSection = lazy(() => import('../../components/maps/MapSection'));
+import { CheckCircle, Send, AlertTriangle, ArrowUpCircle, PlusCircle, Sparkles, User, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function OfficerComplaintDetail() {
   const { id } = useParams();
-  const complaint = complaints.find(c => c.id === id);
-  const [status, setStatus] = useState(complaint?.status);
+  const [complaint, setComplaint] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [status, setStatus] = useState('');
   const [remark, setRemark] = useState('');
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(complaint?.conversation || []);
+  const [messages, setMessages] = useState([]);
   const [showResolve, setShowResolve] = useState(false);
   const [showEscalate, setShowEscalate] = useState(false);
 
-  if (!complaint) return (
+  useEffect(() => {
+    async function loadComplaint() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.getComplaintById(id);
+        if (res.success && res.data) {
+          setComplaint(res.data);
+          setStatus(res.data.status);
+          setMessages(res.data.conversation || []);
+        }
+      } catch (err) {
+        setError(err.message || 'Could not load complaint details');
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) loadComplaint();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: 64 }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading complaint...</p>
+      </div>
+    );
+  }
+
+  if (error || !complaint) return (
     <div style={{ textAlign: 'center', padding: 64 }}>
       <h1>Complaint not found</h1>
-      <Link to="/officer/complaints" className="btn btn-primary" style={{ marginTop: 16 }}>Back</Link>
+      <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>{error}</p>
+      <Link to="/officer/complaints" className="btn btn-primary" style={{ marginTop: 16 }}>Back to Complaints</Link>
     </div>
   );
 
-  const handleAction = (action) => {
+  const handleAction = async (action) => {
     const map = {
       accept: 'Assigned',
       start: 'In Progress',
       resolve: 'Resolved',
+      escalate: 'Escalated',
     };
-    if (map[action]) {
-      setStatus(map[action]);
-      toast.success(`Complaint ${map[action].toLowerCase()}.`);
+    const targetStatus = map[action];
+    if (!targetStatus) return;
+
+    try {
+      const res = await api.updateComplaintStatus(complaint.id, {
+        status: targetStatus,
+        remarks: remark || `Officer updated status to ${targetStatus}`,
+      });
+      if (res.success && res.data) {
+        setComplaint(res.data);
+        setStatus(targetStatus);
+        toast.success(`Complaint status updated to ${targetStatus}.`);
+        setShowResolve(false);
+        setShowEscalate(false);
+        setRemark('');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update status');
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!message.trim()) return;
-    setMessages(prev => [...prev, { id: prev.length + 1, sender: 'officer', name: 'Officer (You)', message: message.trim(), date: new Date().toISOString().split('T')[0], time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
-    setMessage('');
-    toast.success('Message sent to citizen.');
+    try {
+      await api.addRemark(complaint.id, { remarks: message.trim() });
+      setMessages(prev => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          sender: 'officer',
+          name: 'Officer',
+          message: message.trim(),
+          date: new Date().toISOString(),
+        },
+      ]);
+      setMessage('');
+      toast.success('Remark added to timeline.');
+    } catch (err) {
+      toast.error('Could not add remark');
+    }
   };
 
   return (
@@ -53,7 +113,7 @@ export default function OfficerComplaintDetail() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--color-secondary)', fontWeight: 700, background: '#e8f4fd', padding: '2px 10px', borderRadius: 4 }}>{complaint.id}</span>
+              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--color-primary)', fontWeight: 700, background: '#e8f4fd', padding: '3px 10px', borderRadius: 4 }}>{complaint.id}</span>
               <PriorityBadge priority={complaint.priority} />
               <StatusBadge status={status} />
             </div>
@@ -61,6 +121,11 @@ export default function OfficerComplaintDetail() {
           </div>
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {status === 'Submitted' && (
+              <button className="btn btn-primary btn-sm" onClick={() => handleAction('accept')}>
+                Accept Assignment
+              </button>
+            )}
             {status === 'Assigned' && (
               <button className="btn btn-primary btn-sm" onClick={() => handleAction('start')}>
                 <PlusCircle size={14} /> Start Investigation
@@ -87,13 +152,13 @@ export default function OfficerComplaintDetail() {
             <h2 className="section-title" style={{ marginBottom: 16 }}>Citizen Information</h2>
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.25rem', flexShrink: 0 }}>
-                {complaint.citizen.name[0]}
+                {complaint.citizen?.name?.[0] || 'C'}
               </div>
               <div>
-                <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 6 }}>{complaint.citizen.name}</p>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}><Phone size={13} /> {complaint.citizen.mobile}</p>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}><Mail size={13} /> {complaint.citizen.email}</p>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={13} /> {complaint.location.address}, {complaint.location.city}</p>
+                <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 6 }}>{complaint.citizen?.name || 'Citizen'}</p>
+                {complaint.citizen?.phone && <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}><Phone size={13} /> {complaint.citizen.phone}</p>}
+                {complaint.citizen?.email && <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}><Mail size={13} /> {complaint.citizen.email}</p>}
+                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={13} /> {complaint.location?.address || 'Mumbai'}</p>
               </div>
             </div>
           </div>
@@ -103,114 +168,78 @@ export default function OfficerComplaintDetail() {
             <h2 className="section-title" style={{ marginBottom: 16 }}>Complaint Details</h2>
             <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px 16px', fontSize: '0.875rem', marginBottom: 16 }}>
               <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Category</dt>
-              <dd>{complaint.category} › {complaint.subcategory}</dd>
+              <dd>{complaint.category}</dd>
               <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Priority</dt>
               <dd><PriorityBadge priority={complaint.priority} /></dd>
               <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Submitted</dt>
-              <dd>{formatDate(complaint.submittedDate)}</dd>
-              <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Due By</dt>
-              <dd>{formatDate(complaint.expectedResolution)}</dd>
+              <dd>{formatDate(complaint.submittedDate || complaint.createdAt)}</dd>
+              <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Department</dt>
+              <dd>{complaint.department}</dd>
             </dl>
             <div className="divider" style={{ margin: '12px 0' }} />
             <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 8 }}>Description</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>{complaint.description}</p>
           </div>
 
-          {/* AI Analysis */}
-          {complaint.aiAnalysis && (
-            <div style={{ background: '#f0f7ff', border: '1px solid #b3d4ec', borderRadius: 8, padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Sparkles size={15} style={{ color: 'var(--color-secondary)' }} />
-                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--color-primary)' }}>AI Analysis</span>
-                <span style={{ fontSize: '0.6875rem', background: 'var(--color-secondary)', color: '#fff', padding: '1px 6px', borderRadius: 999, fontWeight: 600, marginLeft: 'auto' }}>AI-assisted</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: '0.875rem' }}>
-                <div><p style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Priority</p><p>{complaint.aiAnalysis.priority}</p></div>
-                <div><p style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Confidence</p><p>{complaint.aiAnalysis.confidence}%</p></div>
-                <div><p style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Duplicate Prob.</p><p>{complaint.aiAnalysis.duplicateProbability}%</p></div>
-              </div>
-              <p style={{ marginTop: 10, fontSize: '0.8125rem', paddingTop: 10, borderTop: '1px solid #c2d9f0' }}>{complaint.aiAnalysis.summary}</p>
-            </div>
-          )}
-
-          {/* Map */}
+          {/* Remarks input */}
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
-            <h2 className="section-title" style={{ marginBottom: 12 }}>Location</h2>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 12 }}>{complaint.location.address}, {complaint.location.city} — {complaint.location.lat}, {complaint.location.lng}</p>
-            <Suspense fallback={<div style={{ height: 250, background: 'var(--color-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: 'var(--color-text-secondary)' }}>Loading map…</p></div>}>
-              <MapSection lat={complaint.location.lat} lng={complaint.location.lng} title={complaint.title} height={250} />
-            </Suspense>
-          </div>
-
-          {/* Officer remark */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
-            <h2 className="section-title" style={{ marginBottom: 12 }}>Add Remark</h2>
-            <textarea rows={3} className="form-input" placeholder="Add your investigation notes or action taken..." value={remark} onChange={e => setRemark(e.target.value)} style={{ marginBottom: 10, resize: 'vertical' }} />
-            <button className="btn btn-outline btn-sm" onClick={() => { if (remark.trim()) { toast.success('Remark saved.'); setRemark(''); } }}>
-              Save Remark
-            </button>
-          </div>
-
-          {/* Communication */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
-              <h2 className="section-title">Communication with Citizen</h2>
-            </div>
-            <div style={{ padding: '16px', minHeight: 100, maxHeight: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {messages.length === 0 && <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', textAlign: 'center', padding: '20px 0' }}>No messages yet.</p>}
-              {messages.map(msg => (
-                <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'officer' ? 'flex-end' : 'flex-start' }}>
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>{msg.name} · {msg.date}</p>
-                  <div className={`message ${msg.sender}`}>{msg.message}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8 }}>
-              <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Send a message to the citizen..." rows={2} className="form-input" style={{ flex: 1, resize: 'none' }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
-              <button className="btn btn-primary btn-sm" onClick={sendMessage}><Send size={14} /></button>
+            <h2 className="section-title" style={{ marginBottom: 12 }}>Add Official Remark</h2>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Enter official remark or action taken..."
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                style={{ flex: 1 }}
+              />
+              <button className="btn btn-primary btn-sm" onClick={sendMessage}>
+                <Send size={14} /> Submit
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Timeline sidebar */}
+        {/* Right column */}
         <div>
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px', marginBottom: 16 }}>
             <h2 className="section-title" style={{ marginBottom: 16 }}>Timeline</h2>
-            {complaint.timeline.map((item, i) => (
-              <div key={i} className="timeline-item">
-                <div className={`timeline-dot ${item.done ? 'done' : i > 0 && complaint.timeline[i-1].done ? 'active' : 'pending'}`}>
-                  {item.done ? <CheckCircle size={14} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }} />}
+            <div style={{ borderLeft: '2px solid #e2e8f0', paddingLeft: 16, marginLeft: 6 }}>
+              {(complaint.timeline || []).map((t, i) => (
+                <div key={i} style={{ position: 'relative', marginBottom: 16 }}>
+                  <div style={{ position: 'absolute', left: -21, top: 3, width: 8, height: 8, borderRadius: '50%', background: 'var(--color-secondary)' }} />
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>{t.status}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>{formatDate(t.date)} {t.updatedBy && `· ${t.updatedBy}`}</p>
+                  {t.remarks && <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>{t.remarks}</p>}
                 </div>
-                <div>
-                  <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: 2 }}>{item.status}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{item.date || 'Pending'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick actions */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px', marginTop: 16 }}>
-            <h3 style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: 12 }}>Quick Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {status === 'Submitted' && <button className="btn btn-primary btn-sm" onClick={() => handleAction('accept')} style={{ justifyContent: 'flex-start' }}><CheckCircle size={14} /> Accept Complaint</button>}
-              {status === 'Assigned' && <button className="btn btn-primary btn-sm" onClick={() => handleAction('start')} style={{ justifyContent: 'flex-start' }}><PlusCircle size={14} /> Start Investigation</button>}
-              <button className="btn btn-outline btn-sm" onClick={() => toast.info('Request for information sent.')} style={{ justifyContent: 'flex-start' }}><MessageSquare size={14} /> Request Information</button>
-              {status !== 'Resolved' && (
-                <button className="btn btn-sm" style={{ background: 'var(--color-success-light)', color: 'var(--color-success)', border: '1px solid var(--color-success)', justifyContent: 'flex-start' }} onClick={() => setShowResolve(true)}>
-                  <CheckCircle size={14} /> Mark Resolved
-                </button>
-              )}
-              <button className="btn btn-sm" style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', justifyContent: 'flex-start' }} onClick={() => setShowEscalate(true)}>
-                <ArrowUpCircle size={14} /> Escalate
-              </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      <ConfirmModal open={showResolve} onClose={() => setShowResolve(false)} onConfirm={() => { handleAction('resolve'); setShowResolve(false); }} title="Mark as Resolved" description="Are you sure you want to mark this complaint as resolved? The citizen will be notified." confirmLabel="Mark Resolved" />
-      <ConfirmModal open={showEscalate} onClose={() => setShowEscalate(false)} onConfirm={() => { toast.warning('Complaint escalated.'); setShowEscalate(false); }} title="Escalate Complaint" description="This will escalate the complaint to the department head. Do you want to proceed?" confirmLabel="Escalate" danger />
+      {/* Resolve modal */}
+      {showResolve && (
+        <ConfirmModal
+          title="Mark Complaint as Resolved"
+          message="Confirm that the on-ground investigation and work is complete."
+          confirmLabel="Mark Resolved"
+          onConfirm={() => handleAction('resolve')}
+          onCancel={() => setShowResolve(false)}
+        />
+      )}
+
+      {/* Escalate modal */}
+      {showEscalate && (
+        <ConfirmModal
+          title="Escalate Complaint"
+          message="Escalate this grievance to higher department authorities."
+          confirmLabel="Escalate"
+          onConfirm={() => handleAction('escalate')}
+          onCancel={() => setShowEscalate(false)}
+        />
+      )}
     </div>
   );
 }

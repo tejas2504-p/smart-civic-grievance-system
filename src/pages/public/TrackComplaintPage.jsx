@@ -1,22 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { complaints } from '../../data/mockData';
+import { api } from '../../lib/api';
 import { StatusBadge, PriorityBadge } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
-import { Search, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Search, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TrackComplaintPage() {
   const [searchParams] = useSearchParams();
   const [trackId, setTrackId] = useState(searchParams.get('id') || '');
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+
+  const doTrack = async (idToSearch) => {
+    if (!idToSearch || !idToSearch.trim()) return;
+    setLoading(true);
+    setNotFound(false);
+    try {
+      const res = await api.trackComplaint(idToSearch.trim());
+      if (res.success && res.data) {
+        setResult(res.data);
+        setNotFound(false);
+      } else {
+        setResult(null);
+        setNotFound(true);
+        toast.error('Complaint not found.');
+      }
+    } catch (err) {
+      setResult(null);
+      setNotFound(true);
+      toast.error('Complaint not found.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initialId = searchParams.get('id');
+    if (initialId) {
+      doTrack(initialId);
+    }
+  }, [searchParams]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const found = complaints.find(c => c.id.toLowerCase() === trackId.toLowerCase().trim());
-    if (found) { setResult(found); setNotFound(false); }
-    else { setResult(null); setNotFound(true); toast.error('Complaint not found.'); }
+    doTrack(trackId);
   };
 
   return (
@@ -36,7 +65,7 @@ export default function TrackComplaintPage() {
             Track Your Complaint
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9375rem' }}>
-            Enter your Complaint ID to check the current status
+            Enter your Complaint ID to check the official real-time status
           </p>
         </div>
 
@@ -46,13 +75,13 @@ export default function TrackComplaintPage() {
             className="form-input"
             value={trackId}
             onChange={e => setTrackId(e.target.value)}
-            placeholder="Enter Complaint ID (e.g. CMP-10245)"
+            placeholder="Enter Complaint ID (e.g. MH-2026-1024)"
             style={{ flex: 1, fontSize: '1rem', padding: '10px 14px' }}
             aria-label="Complaint ID"
             required
           />
-          <button type="submit" className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.9375rem' }}>
-            <Search size={16} /> Track
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '10px 24px', fontSize: '0.9375rem' }}>
+            {loading ? 'Searching...' : <><Search size={16} /> Track</>}
           </button>
         </form>
 
@@ -73,54 +102,43 @@ export default function TrackComplaintPage() {
                 <PriorityBadge priority={result.priority} />
                 <StatusBadge status={result.status} />
               </div>
-              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.0625rem' }}>{result.title}</h2>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', margin: 0 }}>{result.title}</h2>
             </div>
 
             <div style={{ padding: '20px 24px' }}>
-              <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px 16px', fontSize: '0.875rem', marginBottom: 24 }}>
-                <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Category</dt>
-                <dd>{result.category}</dd>
-                <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Department</dt>
-                <dd>{result.department}</dd>
-                <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Submitted</dt>
-                <dd>{formatDate(result.submittedDate)}</dd>
-                <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Expected By</dt>
-                <dd>{formatDate(result.expectedResolution)}</dd>
-                <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Assigned To</dt>
-                <dd>{result.officer?.name || 'Not yet assigned'}</dd>
-              </dl>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', marginBottom: 20 }}>
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Department</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>{result.department}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Category</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>{result.category}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Submitted Date</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>{formatDate(result.submittedDate)}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Current Status</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-secondary)' }}>{result.status}</p>
+                </div>
+              </div>
 
-              <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 16 }}>Progress Timeline</h3>
-              {result.timeline.map((item, i) => (
-                <div key={i} className="timeline-item">
-                  <div className={`timeline-dot ${item.done ? 'done' : i > 0 && result.timeline[i-1].done ? 'active' : 'pending'}`}>
-                    {item.done ? <CheckCircle size={14} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }} />}
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: 2 }}>{item.status}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{item.date || 'Pending'}</p>
+              {result.timeline && result.timeline.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 12 }}>Status Timeline</h3>
+                  <div style={{ borderLeft: '2px solid #e2e8f0', paddingLeft: 16, marginLeft: 8 }}>
+                    {result.timeline.map((step, i) => (
+                      <div key={i} style={{ position: 'relative', marginBottom: 16 }}>
+                        <div style={{ position: 'absolute', left: -22, top: 2, width: 10, height: 10, borderRadius: '50%', background: 'var(--color-secondary)' }} />
+                        <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>{step.status}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>{formatDate(step.date)} {step.remarks && `· ${step.remarks}`}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-
-              <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--color-border)', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Link to="/login" className="btn btn-primary btn-sm">Login to View Full Details</Link>
-                <Link to="/" className="btn btn-ghost btn-sm">Back to Home</Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!result && !notFound && (
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px 24px' }}>
-            <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: 12 }}>Quick Examples</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>Try one of these complaint IDs:</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {complaints.map(c => (
-                <button key={c.id} className="btn btn-outline btn-sm" onClick={() => setTrackId(c.id)} style={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>
-                  {c.id}
-                </button>
-              ))}
+              )}
             </div>
           </div>
         )}

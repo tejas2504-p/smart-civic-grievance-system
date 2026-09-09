@@ -1,39 +1,45 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { officerComplaints } from '../../data/mockData';
 import { useAuth } from '../../store/AuthContext';
+import { useData } from '../../store/DataContext';
 import { StatusBadge, PriorityBadge, StatCard, SearchBox, TabList } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
 import { FileText, Clock, CheckCircle, AlertTriangle, AlertCircle, ChevronRight } from 'lucide-react';
 
 export default function OfficerDashboard() {
   const { user } = useAuth();
+  const { complaints = [], loading } = useData();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
-  const assigned = officerComplaints.length;
-  const pending = officerComplaints.filter(c => ['Submitted', 'Under Review', 'Assigned'].includes(c.status)).length;
-  const inProgress = officerComplaints.filter(c => c.status === 'In Progress').length;
-  const resolved = officerComplaints.filter(c => ['Resolved', 'Closed'].includes(c.status)).length;
-  const overdue = officerComplaints.filter(c => c.priority === 'Critical' && c.status !== 'Resolved').length;
-  const escalated = officerComplaints.filter(c => c.status === 'Escalated').length;
+  const assigned = complaints.length;
+  const pending = complaints.filter(c => ['Submitted', 'Under Review', 'Assigned'].includes(c.status)).length;
+  const inProgress = complaints.filter(c => c.status === 'In Progress').length;
+  const resolved = complaints.filter(c => ['Resolved', 'Closed'].includes(c.status)).length;
+  const overdue = complaints.filter(c => c.priority === 'Critical' && c.status !== 'Resolved').length;
+  const escalated = complaints.filter(c => c.status === 'Escalated').length;
 
   const tabs = [
-    { value: 'all', label: 'All', count: officerComplaints.length },
+    { value: 'all', label: 'All', count: complaints.length },
     { value: 'pending', label: 'Pending', count: pending },
     { value: 'inprogress', label: 'In Progress', count: inProgress },
     { value: 'overdue', label: 'Overdue', count: overdue },
   ];
 
-  const filtered = officerComplaints.filter(c => {
-    const matchSearch = !search || c.id.toLowerCase().includes(search.toLowerCase()) || c.title.toLowerCase().includes(search.toLowerCase());
+  const filtered = complaints.filter(c => {
+    const matchSearch = !search ||
+      c.id.toLowerCase().includes(search.toLowerCase()) ||
+      c.title.toLowerCase().includes(search.toLowerCase()) ||
+      c.category.toLowerCase().includes(search.toLowerCase());
+
     const matchTab =
       activeTab === 'all' ||
       (activeTab === 'pending' && ['Submitted', 'Under Review', 'Assigned'].includes(c.status)) ||
       (activeTab === 'inprogress' && c.status === 'In Progress') ||
       (activeTab === 'overdue' && c.priority === 'Critical' && c.status !== 'Resolved');
+
     return matchSearch && matchTab;
   });
 
@@ -41,10 +47,10 @@ export default function OfficerDashboard() {
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 4 }}>
-          {greeting}, {user?.name?.split(' ')[0]} 👋
+          {greeting}, {user?.name?.split(' ')[0] || 'Officer'} 👋
         </h1>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          {user?.department} · {user?.designation} · {user?.employeeId}
+          {user?.department || 'Department Office'} · {user?.designation || 'Officer'}
         </p>
       </div>
 
@@ -70,45 +76,45 @@ export default function OfficerDashboard() {
           <TabList tabs={tabs} active={activeTab} onChange={setActiveTab} />
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Complaint</th>
-                <th>Priority</th>
-                <th>Citizen</th>
-                <th>Submitted</th>
-                <th>SLA</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
-                <tr key={c.id}>
-                  <td><span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--color-secondary)', fontWeight: 600 }}>{c.id}</span></td>
-                  <td style={{ maxWidth: 240 }}>
-                    <p style={{ fontWeight: 500, fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>{c.title.length > 50 ? c.title.slice(0, 50) + '…' : c.title}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{c.category}</p>
-                  </td>
-                  <td><PriorityBadge priority={c.priority} /></td>
-                  <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>{c.citizen.name}</td>
-                  <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(c.submittedDate)}</td>
-                  <td>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: c.status === 'Resolved' ? 'var(--color-success)' : new Date(c.expectedResolution) < new Date() ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
-                      {formatDate(c.expectedResolution)}
-                    </span>
-                  </td>
-                  <td><StatusBadge status={c.status} /></td>
-                  <td>
-                    <Link to={`/officer/complaints/${c.id}`} className="btn btn-primary btn-sm" style={{ fontSize: '0.75rem' }}>
-                      View <ChevronRight size={12} />
-                    </Link>
-                  </td>
+          {loading ? (
+            <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading complaints...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>No complaints found in this category.</div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Complaint</th>
+                  <th>Priority</th>
+                  <th>Citizen</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map(c => (
+                  <tr key={c.id}>
+                    <td><span style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--color-primary)', fontWeight: 700 }}>{c.id}</span></td>
+                    <td style={{ maxWidth: 240 }}>
+                      <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text-primary)', marginBottom: 2 }}>{c.title.length > 50 ? c.title.slice(0, 50) + '…' : c.title}</p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{c.category}</p>
+                    </td>
+                    <td><PriorityBadge priority={c.priority} /></td>
+                    <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>{c.citizen?.name || 'Citizen'}</td>
+                    <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(c.submittedDate || c.createdAt)}</td>
+                    <td><StatusBadge status={c.status} /></td>
+                    <td>
+                      <Link to={`/officer/complaints/${c.id}`} className="btn btn-primary btn-sm" style={{ fontSize: '0.75rem' }}>
+                        View <ChevronRight size={12} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

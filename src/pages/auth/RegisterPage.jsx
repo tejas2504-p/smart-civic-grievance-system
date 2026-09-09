@@ -65,8 +65,8 @@ export default function RegisterPage() {
   const [maskedPhone, setMaskedPhone] = useState('');
   const [maskedEmail, setMaskedEmail] = useState('');
   const [expiresIn, setExpiresIn] = useState(300); // 5 mins in seconds
-  const [resendCooldown, setResendCooldown] = useState(0); // 45s cooldown
-  const [resendsRemaining, setResendsRemaining] = useState(3);
+  const [resendCooldown, setResendCooldown] = useState(0); // 60s cooldown
+  const [resendsRemaining, setResendsRemaining] = useState(5);
 
   // OTP inputs & states
   const [phoneOtp, setPhoneOtp] = useState('');
@@ -129,25 +129,35 @@ export default function RegisterPage() {
       }
     });
 
-    socket.on('PHONE_VERIFIED', (data) => {
-      if (data.verificationId === verificationId) {
+    // Support both canonical otp:* and legacy event formats
+    const handlePhoneVerified = (data) => {
+      if (!data?.verificationId || data.verificationId === verificationId) {
         setPhoneVerified(true);
       }
-    });
+    };
 
-    socket.on('EMAIL_VERIFIED', (data) => {
-      if (data.verificationId === verificationId) {
+    const handleEmailVerified = (data) => {
+      if (!data?.verificationId || data.verificationId === verificationId) {
         setEmailVerified(true);
       }
-    });
+    };
 
-    socket.on('VERIFICATION_COMPLETED', (data) => {
-      if (data.verificationId === verificationId) {
+    const handleCompleted = (data) => {
+      if (!data?.verificationId || data.verificationId === verificationId) {
         setPhoneVerified(true);
         setEmailVerified(true);
         toast.success('🎉 Both Phone and Email verified successfully!');
       }
-    });
+    };
+
+    socket.on('otp:phone-verified', handlePhoneVerified);
+    socket.on('PHONE_VERIFIED', handlePhoneVerified);
+
+    socket.on('otp:email-verified', handleEmailVerified);
+    socket.on('EMAIL_VERIFIED', handleEmailVerified);
+
+    socket.on('otp:verification-complete', handleCompleted);
+    socket.on('VERIFICATION_COMPLETED', handleCompleted);
 
     return () => {
       socket.disconnect();
@@ -188,22 +198,26 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await api.sendOTP({
-        phone: phone.trim(),
+      const allValues = getValues();
+      const res = await api.register({
+        name: allValues.fullName,
         email: email.trim(),
-        captchaToken: token || captchaToken || '1x0000000000000000000000000000000AA',
-        purpose: 'registration',
+        phone: phone.trim(),
+        password: allValues.password,
+        address: `${allValues.address}, ${allValues.city}, ${allValues.state} - ${allValues.pincode}`,
+        role: 'citizen',
+        captchaToken: token || captchaToken,
       });
 
       if (res.success && res.verificationId) {
         setVerificationId(res.verificationId);
-        setMaskedPhone(res.phoneMasked || `+91 ${phone.slice(0, 2)}XXXXXX${phone.slice(-2)}`);
+        setMaskedPhone(res.phoneMasked || `+91 ******${phone.slice(-4)}`);
         setMaskedEmail(res.emailMasked || email);
         setExpiresIn(res.expiresIn || 300);
-        setResendCooldown(45);
+        setResendCooldown(60);
         setStep(2);
 
-        toast.success('Verification OTP dispatched!', {
+        toast.success('Verification OTPs dispatched!', {
           description: `SMS sent to ${res.phoneMasked || phone} and Email sent to ${res.emailMasked || email}.`,
           duration: 6000,
         });
@@ -303,7 +317,7 @@ export default function RegisterPage() {
 
       if (res.success) {
         setExpiresIn(res.expiresIn || 300);
-        setResendCooldown(45);
+        setResendCooldown(60);
         setPhoneOtp('');
         setEmailOtp('');
         if (res.resendsRemaining !== undefined) {
@@ -409,11 +423,14 @@ export default function RegisterPage() {
                           type="tel"
                           maxLength={10}
                           className={`form-input${errors.mobile ? ' error' : ''}`}
-                          placeholder="9876543210"
+                          placeholder="8452940085"
                           style={{ borderRadius: '0 6px 6px 0' }}
                           {...register('mobile')}
                         />
                       </div>
+                      <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '4px 0 0' }}>
+                        Demo Mode: Real SMS OTP is restricted to <strong>+91 8452940085</strong>
+                      </p>
                     </Field>
 
                     <Field id="email" label="Email Address" error={errors.email?.message} required>
@@ -503,7 +520,7 @@ export default function RegisterPage() {
                     disabled={loading}
                   >
                     {loading ? (
-                      <><Spinner size={16} /> Verifying CAPTCHA & Dispatching Security OTPs…</>
+                      <><Spinner size={16} /> Verifying Details & Dispatching Real OTPs…</>
                     ) : (
                       'Send Verification OTPs (Phone & Email)'
                     )}
@@ -533,6 +550,22 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
+                  {/* Verification Status Overview Banner */}
+                  <div style={{ background: phoneVerified && emailVerified ? '#ecfdf5' : '#f8fafc', border: `1px solid ${phoneVerified && emailVerified ? '#10b981' : 'var(--color-border)'}`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontWeight: 600, color: '#334155' }}>Status:</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 4, fontWeight: 700, fontSize: '0.75rem', background: phoneVerified ? '#dcfce7' : '#fef3c7', color: phoneVerified ? '#15803d' : '#b45309', border: `1px solid ${phoneVerified ? '#86efac' : '#fde68a'}` }}>
+                        Phone: {phoneVerified ? '✓ Verified' : '⏳ Not verified'}
+                      </span>
+                      <span style={{ padding: '2px 8px', borderRadius: 4, fontWeight: 700, fontSize: '0.75rem', background: emailVerified ? '#dcfce7' : '#fef3c7', color: emailVerified ? '#15803d' : '#b45309', border: `1px solid ${emailVerified ? '#86efac' : '#fde68a'}` }}>
+                        Email: {emailVerified ? '✓ Verified' : '⏳ Not verified'}
+                      </span>
+                    </div>
+                    {phoneVerified && emailVerified && (
+                      <span style={{ color: '#059669', fontWeight: 750, fontSize: '0.78rem' }}>Ready for activation</span>
+                    )}
+                  </div>
+
                   {/* 1. Phone OTP Section */}
                   <div style={{ background: '#fff', border: phoneVerified ? '2px solid var(--color-success)' : '1px solid var(--color-border)', borderRadius: 10, padding: 16, marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -543,11 +576,11 @@ export default function RegisterPage() {
                       </label>
                       {phoneVerified ? (
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: '#ecfdf5', padding: '3px 8px', borderRadius: 4, border: '1px solid #a7f3d0' }}>
-                          <CheckCircle2 size={13} /> Phone Verified
+                          <CheckCircle2 size={13} /> ✓ Verified
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                          {phoneAttemptsLeft < 5 ? `${phoneAttemptsLeft} attempts left` : '6-digit SMS code'}
+                        <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600, background: '#fef3c7', padding: '2px 8px', borderRadius: 4, border: '1px solid #fde68a' }}>
+                          ⏳ Not verified ({phoneAttemptsLeft} attempts left)
                         </span>
                       )}
                     </div>
@@ -559,7 +592,7 @@ export default function RegisterPage() {
                           type="text"
                           maxLength={6}
                           value={phoneOtp}
-                          onChange={e => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
+                          onChange={e => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                           placeholder="••••••"
                           className="form-input"
                           style={{ flex: 1, fontSize: '1.15rem', textAlign: 'center', letterSpacing: '0.25em', fontWeight: 700 }}
@@ -578,7 +611,7 @@ export default function RegisterPage() {
                       </div>
                     ) : (
                       <div style={{ color: 'var(--color-success)', fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Check size={16} /> Phone verified with external SMS code.
+                        <Check size={16} /> Phone verified with server-side SMS code.
                       </div>
                     )}
                   </div>
@@ -593,11 +626,11 @@ export default function RegisterPage() {
                       </label>
                       {emailVerified ? (
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: '#ecfdf5', padding: '3px 8px', borderRadius: 4, border: '1px solid #a7f3d0' }}>
-                          <CheckCircle2 size={13} /> Email Verified
+                          <CheckCircle2 size={13} /> ✓ Verified
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                          {emailAttemptsLeft < 5 ? `${emailAttemptsLeft} attempts left` : '6-digit email code'}
+                        <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600, background: '#fef3c7', padding: '2px 8px', borderRadius: 4, border: '1px solid #fde68a' }}>
+                          ⏳ Not verified ({emailAttemptsLeft} attempts left)
                         </span>
                       )}
                     </div>
@@ -609,7 +642,7 @@ export default function RegisterPage() {
                           type="text"
                           maxLength={6}
                           value={emailOtp}
-                          onChange={e => setEmailOtp(e.target.value.replace(/\D/g, ''))}
+                          onChange={e => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                           placeholder="••••••"
                           className="form-input"
                           style={{ flex: 1, fontSize: '1.15rem', textAlign: 'center', letterSpacing: '0.25em', fontWeight: 700 }}
@@ -627,7 +660,7 @@ export default function RegisterPage() {
                       </div>
                     ) : (
                       <div style={{ color: 'var(--color-success)', fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Check size={16} /> Email verified with external SMTP code.
+                        <Check size={16} /> Email verified with Resend verification code.
                       </div>
                     )}
                   </div>
@@ -712,9 +745,9 @@ export default function RegisterPage() {
             {/* Footer */}
             <div style={{ padding: '16px 28px', borderTop: '1px solid var(--color-border)', background: 'var(--color-bg)', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                Already registered?{' '}
+                Already have an account?{' '}
                 <Link to="/login" style={{ color: 'var(--color-secondary)', fontWeight: 700, textDecoration: 'none' }}>
-                  Sign In to Dashboard
+                  Login
                 </Link>
               </p>
             </div>

@@ -10,24 +10,25 @@ const otpVerificationSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
       trim: true,
       index: true,
     },
     email: {
       type: String,
-      required: true,
       trim: true,
       lowercase: true,
       index: true,
     },
+    channel: {
+      type: String,
+      enum: ['phone', 'email', 'both'],
+      default: 'both',
+    },
     phoneOtpHash: {
       type: String,
-      required: true,
     },
     emailOtpHash: {
       type: String,
-      required: true,
     },
     phoneVerified: {
       type: Boolean,
@@ -57,6 +58,12 @@ const otpVerificationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    phoneOtpExpiresAt: {
+      type: Date,
+    },
+    emailOtpExpiresAt: {
+      type: Date,
+    },
     expiresAt: {
       type: Date,
       required: true,
@@ -71,12 +78,25 @@ const otpVerificationSchema = new mongoose.Schema(
       enum: ['registration', 'login', 'password_reset'],
       default: 'registration',
     },
+    pendingRegistration: {
+      name: { type: String },
+      passwordHash: { type: String },
+      address: { type: String },
+      role: { type: String, default: 'citizen' },
+    },
   },
   {
     timestamps: true,
     strict: true,
   }
 );
+
+// Ensure at least one contact method is provided
+otpVerificationSchema.pre('validate', function () {
+  if (!this.phoneNumber && !this.email) {
+    this.invalidate('phoneNumber', 'At least one contact method (phone number or email address) is required.');
+  }
+});
 
 // Compound index to quickly find active sessions
 otpVerificationSchema.index({ phoneNumber: 1, email: 1, isCompleted: 1 });

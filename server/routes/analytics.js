@@ -12,6 +12,13 @@ router.get('/overview', async (req, res) => {
     const inProgress = await Complaint.countDocuments({ status: { $in: ['In Progress', 'Assigned'] } });
     const pending = await Complaint.countDocuments({ status: { $in: ['Submitted', 'Under Review'] } });
 
+    const critical = await Complaint.countDocuments({ priority: 'Critical' });
+
+    // Today's complaints
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const today = await Complaint.countDocuments({ createdAt: { $gte: startOfToday } });
+
     // Category breakdown
     const categoryStats = await Complaint.aggregate([
       { $group: { _id: '$category', count: { $sum: 1 } } },
@@ -33,6 +40,8 @@ router.get('/overview', async (req, res) => {
         resolved,
         inProgress,
         pending,
+        critical,
+        today,
         resolutionRate: Number(resolutionRate),
         categoryStats,
         departmentStats,

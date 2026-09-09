@@ -10,13 +10,15 @@ export const helmetMiddleware = helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
 
+const isDev = !process.env.NODE_ENV || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
 /**
  * Rate Limiter for Sending OTP (prevents spamming SMS/Email gateways)
- * Limit: 5 requests per 15 minutes per IP
+ * Limit: 100 requests in development/test, 5 in production per 15 minutes per IP
  */
 export const sendOtpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: isDev ? 100 : 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -32,7 +34,7 @@ export const sendOtpLimiter = rateLimit({
  */
 export const resendOtpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 3,
+  max: isDev ? 50 : 3,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -48,7 +50,7 @@ export const resendOtpLimiter = rateLimit({
  */
 export const verifyOtpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: isDev ? 100 : 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
