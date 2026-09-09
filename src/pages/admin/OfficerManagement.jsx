@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { officers } from '../../data/mockData';
 import { SearchBox, Modal, ConfirmModal } from '../../components/ui/SharedComponents';
 import { toast } from 'sonner';
-import { PlusCircle, Edit, Trash2, Eye, User, BarChart2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, BarChart2 } from 'lucide-react';
 
 export default function OfficerManagement() {
   const [search, setSearch] = useState('');

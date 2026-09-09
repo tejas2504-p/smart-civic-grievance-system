@@ -8,11 +8,17 @@ async function fetchJSON(endpoint, options = {}) {
     ...options.headers,
   };
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     const data = await response.json();
     if (!response.ok) {
@@ -20,7 +26,16 @@ async function fetchJSON(endpoint, options = {}) {
     }
     return data;
   } catch (error) {
+    clearTimeout(timeoutId);
     console.warn(`[API] ${endpoint} failed:`, error.message);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your internet connection and try again.');
+    }
+    if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+      throw new Error('Unable to connect to the server. Please check your connection or try again later.');
+    }
+    
     throw error;
   }
 }

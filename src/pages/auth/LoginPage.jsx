@@ -14,9 +14,7 @@ import {
   KeyRound, 
   ArrowLeft, 
   Clock, 
-  Lock,
-  RotateCw,
-  CheckCircle2
+  Lock
 } from 'lucide-react';
 import { Spinner } from '../../components/ui/SharedComponents';
 import TurnstileCaptcha from '../../components/common/TurnstileCaptcha';
@@ -88,7 +86,7 @@ export default function LoginPage() {
 
       if (res.success && res.data) {
         localStorage.setItem('auth_token', res.data.token);
-        login(res.data.role || 'citizen', res.data);
+        login(res.data);
         toast.success(`Welcome back, ${res.data.name}!`);
         if (res.data.role === 'officer') navigate('/officer');
         else if (res.data.role === 'admin') navigate('/admin');
@@ -182,7 +180,7 @@ export default function LoginPage() {
         const loginRes = await api.login({ verificationId });
         if (loginRes.success && loginRes.data) {
           localStorage.setItem('auth_token', loginRes.data.token);
-          login(loginRes.data.role || 'citizen', loginRes.data);
+          login(loginRes.data);
           toast.success('Signed in successfully with verified OTP!');
           if (loginRes.data.role === 'officer') navigate('/officer');
           else if (loginRes.data.role === 'admin') navigate('/admin');

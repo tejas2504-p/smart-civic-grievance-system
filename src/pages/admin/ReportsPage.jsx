@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../store/AuthContext';
 import { toast } from 'sonner';
 import { FileText, Download, Calendar, Building2, User, BarChart2, FileBarChart, Clock } from 'lucide-react';
 
@@ -56,9 +57,38 @@ const reportTypes = [
 ];
 
 export default function ReportsPage() {
-  const handleExport = (type, format) => {
-    toast.success(`Generating ${type} as ${format}...`);
-    setTimeout(() => toast.success(`${type} exported successfully.`), 1200);
+  const { user } = useAuth();
+
+  const handleExport = async (type, format) => {
+    if (format !== 'CSV') {
+      toast.error('Only CSV export is supported at this time.');
+      return;
+    }
+    
+    toast.loading(`Generating ${type}...`, { id: 'export-toast' });
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/reports/export/${encodeURIComponent(type)}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`${type} exported successfully.`, { id: 'export-toast' });
+    } catch (error) {
+      toast.error(`Failed to export ${type}.`, { id: 'export-toast' });
+      console.error(error);
+    }
   };
 
   return (

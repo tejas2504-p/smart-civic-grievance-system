@@ -8,6 +8,9 @@ export async function connectDB() {
   }
 
   try {
+    mongoose.set('strictQuery', true);
+    mongoose.set('bufferCommands', false); // Fail fast if disconnected
+    
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
     });
