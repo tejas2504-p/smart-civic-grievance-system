@@ -101,12 +101,12 @@ export default function ReportsPage() {
       </div>
 
       {/* Date range filter */}
-      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(12px, 2.5vw, 16px) clamp(12px, 3vw, 20px)', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }} htmlFor="date-from">From</label>
           <input id="date-from" type="date" className="form-input" style={{ width: 'auto' }} defaultValue="2026-08-01" />
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)' }} htmlFor="date-to">To</label>
           <input id="date-to" type="date" className="form-input" style={{ width: 'auto' }} defaultValue="2026-08-21" />
         </div>
@@ -114,9 +114,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Report cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
         {reportTypes.map((report, i) => (
-          <div key={i} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div key={i} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(14px, 2.5vw, 20px)', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: report.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: report.iconColor }}>
                 <report.icon size={20} />
@@ -126,18 +126,18 @@ export default function ReportsPage() {
                 <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{report.desc}</p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
               <button
                 className="btn btn-outline btn-sm"
                 onClick={() => handleExport(report.title, 'CSV')}
-                style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem' }}
+                style={{ flex: '1 1 120px', justifyContent: 'center', fontSize: '0.8125rem' }}
               >
                 <Download size={13} /> Export CSV
               </button>
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => handleExport(report.title, 'PDF')}
-                style={{ flex: 1, justifyContent: 'center', fontSize: '0.8125rem' }}
+                style={{ flex: '1 1 120px', justifyContent: 'center', fontSize: '0.8125rem' }}
               >
                 <Download size={13} /> Export PDF
               </button>

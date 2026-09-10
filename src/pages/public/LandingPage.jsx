@@ -16,7 +16,7 @@ import HeroSlider from '../../components/ui/HeroSlider';
 // Public footer
 function PublicFooter() {
   return (
-    <footer style={{ background: '#09223e', color: 'rgba(255,255,255,0.8)', padding: '48px 24px 0' }}>
+    <footer style={{ background: '#09223e', color: 'rgba(255,255,255,0.8)', padding: 'clamp(32px, 5vw, 48px) clamp(16px, 3vw, 24px) 0' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 32, paddingBottom: 36 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -178,10 +178,10 @@ export default function LandingPage() {
   return (
     <div style={{ background: 'var(--color-bg)' }}>
       {/* Hero Section */}
-      <section className="hero-section" aria-labelledby="hero-title" style={{ padding: '36px 0 32px', background: 'linear-gradient(145deg, #09223e 0%, #123B63 55%, #184c7e 100%)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <section className="hero-section" aria-labelledby="hero-title" style={{ padding: '28px 0', background: 'linear-gradient(145deg, #09223e 0%, #123B63 55%, #184c7e 100%)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 3vw, 24px)' }}>
           {/* Row 1: Slider and Quick Login */}
-          <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: 28, alignItems: 'stretch' }}>
+          <div className="hero-grid grid-responsive-hero">
             
             {/* SEO Accessibility Headings */}
             <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
@@ -195,7 +195,7 @@ export default function LandingPage() {
             </div>
 
             {/* Quick login panel */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: '28px 24px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 'clamp(20px, 3vw, 28px) clamp(18px, 3vw, 24px)', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 750, color: 'var(--color-text-primary)', marginBottom: 4 }}>
                   Access Your Account
@@ -221,7 +221,6 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>New citizen? </span>
                   <Link to="/register" style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', fontWeight: 700, textDecoration: 'none' }}>Create Account</Link>
@@ -233,18 +232,17 @@ export default function LandingPage() {
           {/* Row 2: Secondary Quick Track & Info Bar */}
           <div style={{ 
             display: 'flex', 
- 
             justifyContent: 'space-between', 
             alignItems: 'center', 
             flexWrap: 'wrap', 
-            gap: '24px',
+            gap: '18px',
             background: 'rgba(255, 255, 255, 0.08)',
             border: '1px solid rgba(255, 255, 255, 0.15)',
             borderRadius: '10px',
-            padding: '16px 24px',
-            marginTop: '32px'
+            padding: '16px clamp(14px, 3vw, 24px)',
+            marginTop: '28px'
           }}>
-            <div style={{ flex: '1 1 500px' }}>
+            <div style={{ flex: '1 1 300px' }}>
               <p style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>
                 {t('landing.heroTitle')}
               </p>
@@ -263,17 +261,17 @@ export default function LandingPage() {
               border: '1px solid rgba(255,255,255,0.2)', 
               borderRadius: 8, 
               padding: '4px 4px 4px 12px',
-              flexShrink: 0
+              flexWrap: 'nowrap'
             }}>
               <input
                 type="text"
                 value={trackId}
                 onChange={e => setTrackId(e.target.value)}
                 placeholder={t('landing.trackPlaceholder')}
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '0.875rem' }}
+                style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '0.875rem' }}
                 aria-label="Enter complaint ID to track"
               />
-              <button type="submit" className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 6 }}>
+              <button type="submit" className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 6, flexShrink: 0 }}>
                 {t('landing.track')}
               </button>
             </form>
@@ -282,18 +280,18 @@ export default function LandingPage() {
       </section>
 
       {/* Statistics */}
-      <section style={{ background: 'var(--color-primary-dark)', padding: '28px 24px' }} aria-label="Portal statistics">
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+      <section style={{ background: 'var(--color-primary-dark)', padding: '24px clamp(16px, 3vw, 24px)' }} aria-label="Portal statistics">
+        <div className="grid-responsive-stats-4" style={{ maxWidth: 1200, margin: '0 auto' }}>
           {stats.map((stat, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '12px' }}>
-              <div style={{ fontSize: '1.875rem', fontWeight: 800, color: '#fff', marginBottom: 4 }}>{stat.value}</div>
+            <div key={i} style={{ textAlign: 'center', padding: '10px' }}>
+              <div style={{ fontSize: 'clamp(1.5rem, 3.5vw, 1.875rem)', fontWeight: 800, color: '#fff', marginBottom: 4 }}>{stat.value}</div>
               <div style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }}>
+      <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(28px, 4vw, 48px) clamp(16px, 3vw, 24px)' }}>
         {/* Quick Services — Modern 3D Cards */}
         <section aria-labelledby="services-title" style={{ marginBottom: 60 }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -301,7 +299,7 @@ export default function LandingPage() {
               <Sparkles size={13} color="#E67E22" />
               <span>CITIZEN SERVICES & REDRESSAL</span>
             </div>
-            <h2 id="services-title" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>
+            <h2 id="services-title" style={{ fontSize: 'clamp(1.35rem, 3vw, 1.75rem)', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>
               Quick Services
             </h2>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', maxWidth: 540, margin: '0 auto' }}>
@@ -309,7 +307,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: 20 }}>
             {serviceCards.map((card, i) => (
               <Link 
                 key={i} 

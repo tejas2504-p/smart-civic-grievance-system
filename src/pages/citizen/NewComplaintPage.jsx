@@ -19,7 +19,7 @@ const STEPS = [
 
 function StepIndicator({ currentStep }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, overflowX: 'auto', paddingBottom: 4 }}>
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 6, maxWidth: '100%' }}>
       {STEPS.map((step, i) => (
         <React.Fragment key={step.id}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -54,33 +54,22 @@ const mockAI = {
 function AIPanel({ visible }) {
   if (!visible) return null;
   return (
-    <div style={{ background: '#f0f7ff', border: '1px solid #b3d4ec', borderRadius: 8, padding: 16, marginTop: 16 }}>
+    <div style={{ marginTop: 20, padding: 16, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Sparkles size={15} style={{ color: 'var(--color-secondary)' }} />
-        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-primary)' }}>AI Complaint Analysis</span>
-        <span style={{ fontSize: '0.6875rem', background: 'var(--color-secondary)', color: '#fff', padding: '1px 6px', borderRadius: 999, fontWeight: 600 }}>AI-assisted</span>
+        <Sparkles size={16} color="var(--color-success)" />
+        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          AI Grievance Analysis
+        </span>
+        <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
+          {mockAI.confidence}% confidence
+        </span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
-        {[
-          { label: 'Suggested Category', value: mockAI.category },
-          { label: 'Priority', value: mockAI.priority },
-          { label: 'Department', value: mockAI.department },
-          { label: 'Confidence', value: `${mockAI.confidence}%` },
-        ].map(({ label, value }) => (
-          <div key={label}>
-            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-primary)', fontWeight: 500 }}>{value}</p>
-          </div>
-        ))}
+      <p style={{ fontSize: '0.8125rem', color: '#166534', marginBottom: 10, lineHeight: 1.5 }}>{mockAI.summary}</p>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.75rem', color: '#15803d' }}>
+        <span>Dept: <strong>{mockAI.department}</strong></span>
+        <span>Suggested Priority: <strong>{mockAI.priority}</strong></span>
+        <span>Est. Resolution: <strong>48 hours</strong></span>
       </div>
-      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #c2d9f0' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>AI Summary</p>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)' }}>{mockAI.summary}</p>
-      </div>
-      <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 10 }}>
-        <AlertCircle size={11} style={{ display: 'inline', marginRight: 4 }} />
-        Please review AI suggestions before submitting. You can override them.
-      </p>
     </div>
   );
 }
@@ -150,7 +139,7 @@ export default function NewComplaintPage() {
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <StepIndicator currentStep={step} />
 
-        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 4vw, 28px)' }}>
           {/* Step 1: Complaint Details */}
           {step === 1 && (
             <div>
@@ -223,25 +212,25 @@ export default function NewComplaintPage() {
                   <ArrowLeft size={15} /> Back
                 </button>
                 <button className="btn btn-primary" onClick={() => setStep(4)} style={{ marginLeft: 'auto' }}>
-                  Next <ArrowRight size={15} />
+                  Review & Submit <ArrowRight size={15} />
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 4: Review */}
+          {/* Step 4: Review & Submit */}
           {step === 4 && (
             <div>
               <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 8 }}>
-                Step 4 — Review & Submit
+                Step 4 — Review & Confirm
               </h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 20 }}>
-                Please review your complaint details before submitting.
+                Please review the information below before submitting.
               </p>
 
               <div style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 20, marginBottom: 16 }}>
                 <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--color-border)' }}>Complaint Summary</h3>
-                <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px 16px', fontSize: '0.875rem' }}>
+                <dl className="responsive-dl" style={{ fontSize: '0.875rem' }}>
                   <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Title</dt>
                   <dd style={{ color: 'var(--color-text-primary)' }}>{formData.title || '—'}</dd>
                   <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Category</dt>
@@ -297,7 +286,9 @@ function Step1Form({ onNext, initial }) {
     category: z.string().min(1, 'Please select a category'),
     subcategory: z.string().optional(),
   });
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
+  const categoryValue = watch('category');
+  const selectedCat = categories.find(c => c.name === categoryValue);
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
@@ -311,7 +302,7 @@ function Step1Form({ onNext, initial }) {
         <textarea id="description" rows={4} className={`form-input${errors.description ? ' error' : ''}`} placeholder="Provide detailed information about the issue — what is the problem, how long has it been happening, what impact is it having..." style={{ resize: 'vertical' }} {...register('description')} />
         {errors.description && <p className="form-error" role="alert">{errors.description.message}</p>}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+      <div className="grid-responsive-form">
         <div style={{ marginBottom: 16 }}>
           <label className="form-label" htmlFor="category">Category <span className="required" aria-hidden="true">*</span></label>
           <select id="category" className={`form-input${errors.category ? ' error' : ''}`} {...register('category')}>
@@ -366,7 +357,7 @@ function Step2Form({ onNext, onBack, initial }) {
         <input id="loc-address" type="text" className={`form-input${errors.address ? ' error' : ''}`} placeholder="Street address, landmark" {...register('address')} />
         {errors.address && <p className="form-error" role="alert">{errors.address.message}</p>}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+      <div className="grid-responsive-form">
         <div style={{ marginBottom: 16 }}>
           <label className="form-label" htmlFor="loc-city">City <span className="required" aria-hidden="true">*</span></label>
           <input id="loc-city" type="text" className={`form-input${errors.city ? ' error' : ''}`} placeholder="Pune" {...register('city')} />

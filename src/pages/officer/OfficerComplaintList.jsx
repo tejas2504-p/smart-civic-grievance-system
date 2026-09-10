@@ -28,10 +28,10 @@ export default function OfficerComplaintList() {
         </div>
       </div>
       <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)', borderBottom: '1px solid var(--color-border)' }}>
           <SearchBox value={search} onChange={setSearch} placeholder="Search by ID, title, category..." style={{ maxWidth: 320 }} />
         </div>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="data-table-wrapper">
           {loading ? (
             <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading complaints...</div>
           ) : paginated.length === 0 ? (

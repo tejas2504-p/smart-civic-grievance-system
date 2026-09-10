@@ -150,6 +150,7 @@ export function createAuthRouter(io) {
             verificationId,
             expiresIn: expiresInSeconds,
             emailMasked: maskEmail(normalizedEmail),
+            ...(emailResult?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devOtp: emailOtp, devEmailOtp: emailOtp } : {}),
           });
         }
 
@@ -390,7 +391,7 @@ export function createAuthRouter(io) {
         timestamp: Date.now(),
       });
 
-      // 13. Return generic success response (NO OTP IN RESPONSE)
+      // 13. Return success response (with dev hint in development/demo mode)
       return res.status(200).json({
         success: true,
         message: 'Verification OTPs have been sent.',
@@ -400,6 +401,7 @@ export function createAuthRouter(io) {
         expiresIn: expiresInSeconds,
         phoneMasked: maskPhone(formattedPhone),
         emailMasked: maskEmail(normalizedEmail),
+        ...(emailResult.value?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devEmailOtp: emailOtp } : {}),
         deliveryStatus: {
           sms: 'delivered',
           email: 'delivered',
@@ -734,6 +736,7 @@ export function createAuthRouter(io) {
         message: 'New verification OTP sent successfully.',
         expiresIn: expiryMinutes * 60,
         resendsRemaining: maxSends - session.resendCount,
+        ...(emailResult?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devEmailOtp: newEmailOtp } : {}),
       });
     } catch (error) {
       console.error('❌ [Resend OTP Error]:', error.message);
@@ -998,7 +1001,7 @@ export function createAuthRouter(io) {
         timestamp: Date.now(),
       });
 
-      // 13. Safe Response (NO OTP EXPOSED)
+      // 13. Safe Response (with dev hint in development/demo mode)
       return res.status(200).json({
         success: true,
         message: 'Verification OTPs have been sent.',
@@ -1008,6 +1011,7 @@ export function createAuthRouter(io) {
         expiresIn: expiresInSeconds,
         phoneMasked: maskPhone(formattedPhone),
         emailMasked: maskEmail(normalizedEmail),
+        ...(emailResult.value?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devEmailOtp: emailOtp } : {}),
       });
     } catch (error) {
       console.error('❌ [Register Error]:', error.message);

@@ -4,15 +4,15 @@ import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
 import { StatusBadge, PriorityBadge, EmptyState } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
-import { 
-  FileText, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  PlusCircle, 
-  Bell, 
-  ChevronRight, 
-  Search, 
+import {
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  PlusCircle,
+  Bell,
+  ChevronRight,
+  Search,
   MapPin,
   Headphones,
   ShieldCheck
@@ -23,7 +23,7 @@ export default function CitizenDashboard() {
   const { complaints, notifications } = useData();
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED'
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const firstName = user?.name ? user.name.split(' ')[0] : 'Citizen';
@@ -66,11 +66,11 @@ export default function CitizenDashboard() {
   return (
     <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Top Greeting & Main Action Header */}
-      <div 
+      <div
         style={{
           background: 'linear-gradient(135deg, #123B63 0%, #1D5D91 100%)',
           borderRadius: 14,
-          padding: '24px 28px',
+          padding: 'clamp(16px, 3.5vw, 24px) clamp(16px, 3.5vw, 28px)',
           color: '#ffffff',
           display: 'flex',
           alignItems: 'center',
@@ -89,7 +89,7 @@ export default function CitizenDashboard() {
               <ShieldCheck size={13} color="#4ade80" /> Verified Citizen
             </span>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 750, color: '#ffffff', margin: '0 0 4px', letterSpacing: '-0.01em' }}>
+          <h1 style={{ fontSize: 'clamp(1.2rem, 3.5vw, 1.5rem)', fontWeight: 750, color: '#ffffff', margin: '0 0 4px', letterSpacing: '-0.01em' }}>
             {greeting}, {firstName} 👋
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', margin: 0 }}>
@@ -98,8 +98,8 @@ export default function CitizenDashboard() {
         </div>
 
         {/* Big Clean Action Button */}
-        <Link 
-          to="/complaints/new" 
+        <Link
+          to="/complaints/new"
           className="btn"
           style={{
             background: '#E67E22',
@@ -124,24 +124,24 @@ export default function CitizenDashboard() {
 
       {/* Unread Notifications Alert (Minimal & Clean) */}
       {unreadNotifs > 0 && (
-        <Link 
-          to="/notifications" 
-          style={{ 
-            textDecoration: 'none', 
-            background: '#FFFDF5', 
-            border: '1px solid #FDE68A', 
-            borderRadius: 10, 
-            padding: '10px 16px', 
-            display: 'flex', 
-            alignItems: 'center', 
+        <Link
+          to="/notifications"
+          style={{
+            textDecoration: 'none',
+            background: '#FFFDF5',
+            border: '1px solid #FDE68A',
+            borderRadius: 10,
+            padding: '10px 16px',
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
             transition: 'all 0.15s ease'
           }}
         >
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Bell size={14} color="#D97706" />
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Bell size={16} />
           </div>
-          <p style={{ fontSize: '0.85rem', color: '#92400E', margin: 0, fontWeight: 500, flex: 1 }}>
+          <p style={{ margin: 0, fontSize: '0.825rem', color: '#92400E', flex: 1, lineHeight: 1.4 }}>
             You have <strong>{unreadNotifs} unread notification{unreadNotifs > 1 ? 's' : ''}</strong> on your grievances. Click to review updates.
           </p>
           <span style={{ fontSize: '0.785rem', color: '#B45309', fontWeight: 650, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -151,7 +151,7 @@ export default function CitizenDashboard() {
       )}
 
       {/* 4 Clean Interactive Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 14 }}>
         {/* Card 1: All */}
         <button
           type="button"
@@ -280,9 +280,9 @@ export default function CitizenDashboard() {
       </div>
 
       {/* 4 Minimal Quick Shortcut Pills */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-        <Link 
-          to="/complaints/new" 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
+        <Link
+          to="/complaints/new"
           style={{
             background: '#ffffff',
             border: '1px solid var(--color-border)',
@@ -306,8 +306,8 @@ export default function CitizenDashboard() {
           <ChevronRight size={16} color="var(--color-text-secondary)" />
         </Link>
 
-        <Link 
-          to="/track" 
+        <Link
+          to="/track"
           style={{
             background: '#ffffff',
             border: '1px solid var(--color-border)',
@@ -331,8 +331,8 @@ export default function CitizenDashboard() {
           <ChevronRight size={16} color="var(--color-text-secondary)" />
         </Link>
 
-        <Link 
-          to="/admin/map" 
+        <Link
+          to="/admin/map"
           style={{
             background: '#ffffff',
             border: '1px solid var(--color-border)',
@@ -356,8 +356,8 @@ export default function CitizenDashboard() {
           <ChevronRight size={16} color="var(--color-text-secondary)" />
         </Link>
 
-        <Link 
-          to="/help" 
+        <Link
+          to="/help"
           style={{
             background: '#ffffff',
             border: '1px solid var(--color-border)',
@@ -385,14 +385,14 @@ export default function CitizenDashboard() {
       {/* Main Complaints List (Clean, minimal, easy to scan) */}
       <div style={{ background: '#ffffff', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
         {/* Controls Bar: Tabs & Quick Search */}
-        <div 
-          style={{ 
-            padding: '16px 20px', 
-            borderBottom: '1px solid var(--color-border)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            flexWrap: 'wrap', 
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: 14,
             background: '#FAFBFD'
           }}
@@ -484,7 +484,7 @@ export default function CitizenDashboard() {
 
         {/* Complaints Table / List */}
         {filteredComplaints.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="data-table-wrapper">
             <table className="data-table" style={{ width: '100%', margin: 0 }}>
               <thead>
                 <tr style={{ background: '#FAFBFD' }}>
@@ -501,11 +501,11 @@ export default function CitizenDashboard() {
                 {filteredComplaints.map(c => (
                   <tr key={c.id} style={{ transition: 'background 0.15s ease' }}>
                     <td>
-                      <span 
-                        style={{ 
-                          fontFamily: 'monospace', 
-                          fontSize: '0.8rem', 
-                          color: 'var(--color-primary)', 
+                      <span
+                        style={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.8rem',
+                          color: 'var(--color-primary)',
                           fontWeight: 700,
                           background: '#EEF4FA',
                           padding: '2px 7px',
@@ -536,12 +536,12 @@ export default function CitizenDashboard() {
                       <StatusBadge status={c.status} />
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <Link 
-                        to={`/complaints/${c.id}`} 
+                      <Link
+                        to={`/complaints/${c.id}`}
                         className="btn btn-outline btn-sm"
-                        style={{ 
-                          fontSize: '0.775rem', 
-                          padding: '4px 10px', 
+                        style={{
+                          fontSize: '0.775rem',
+                          padding: '4px 10px',
                           fontWeight: 600,
                           color: 'var(--color-secondary)',
                           borderColor: 'var(--color-border)'
@@ -563,7 +563,7 @@ export default function CitizenDashboard() {
               description={searchQuery ? 'Try searching with a different keyword or clear the search query.' : 'You have not submitted any grievances in this category yet.'}
               action={
                 searchQuery ? (
-                  <button 
+                  <button
                     onClick={() => { setSearchQuery(''); setFilterStatus('ALL'); }}
                     className="btn btn-outline btn-sm"
                   >
@@ -580,10 +580,10 @@ export default function CitizenDashboard() {
         )}
 
         {/* Footer info & view all */}
-        <div 
-          style={{ 
-            padding: '12px 20px', 
-            borderTop: '1px solid var(--color-border)', 
+        <div
+          style={{
+            padding: '12px 20px',
+            borderTop: '1px solid var(--color-border)',
             background: '#FAFBFD',
             display: 'flex',
             alignItems: 'center',
@@ -593,11 +593,11 @@ export default function CitizenDashboard() {
           }}
         >
           <span>Showing {filteredComplaints.length} of {total} grievances</span>
-          <Link 
-            to="/complaints" 
-            style={{ 
-              color: 'var(--color-secondary)', 
-              fontWeight: 650, 
+          <Link
+            to="/complaints"
+            style={{
+              color: 'var(--color-secondary)',
+              fontWeight: 650,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',

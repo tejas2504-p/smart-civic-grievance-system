@@ -22,24 +22,26 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20 }}>
+      <div className="grid-responsive-profile">
         {/* Section nav */}
         <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '8px', height: 'fit-content' }}>
-          {sections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setActiveSection(s.id)}
-              className={activeSection === s.id ? 'sidebar-nav-item active' : 'sidebar-nav-item'}
-              style={{ width: '100%', background: activeSection === s.id ? '#e8f4fd' : 'transparent', color: activeSection === s.id ? 'var(--color-primary)' : 'var(--color-text-secondary)', border: 'none', cursor: 'pointer', borderRadius: 6, margin: '2px 0' }}
-            >
-              <s.icon size={16} className="icon" />
-              <span>{s.label}</span>
-            </button>
-          ))}
+          <div className="settings-nav">
+            {sections.map(s => (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                className={activeSection === s.id ? 'sidebar-nav-item active' : 'sidebar-nav-item'}
+                style={{ width: '100%', background: activeSection === s.id ? '#e8f4fd' : 'transparent', color: activeSection === s.id ? 'var(--color-primary)' : 'var(--color-text-secondary)', border: 'none', cursor: 'pointer', borderRadius: 6, margin: '2px 0' }}
+              >
+                <s.icon size={16} className="icon" />
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Settings content */}
-        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '24px' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 24px)' }}>
           {activeSection === 'general' && (
             <div>
               <h2 className="section-title" style={{ marginBottom: 20 }}>General Settings</h2>

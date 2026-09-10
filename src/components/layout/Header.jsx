@@ -91,17 +91,21 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
         style={{
           background: '#09223e',
           color: '#cbd5e1',
-          padding: '4px 20px',
+          padding: '4px clamp(10px, 2.5vw, 20px)',
           fontSize: '0.75rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
+          gap: 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontWeight: 600, color: '#f1f5f9' }}>
-            Government of Maharashtra | महाराष्ट्र शासन
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+          <span style={{ fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Government of Maharashtra
+          </span>
+          <span className="hide-mobile" style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>
+            | महाराष्ट्र शासन
           </span>
         </div>
 
@@ -278,8 +282,8 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
           height: 68,
           display: 'flex',
           alignItems: 'center',
-          padding: '0 24px',
-          gap: 16,
+          padding: '0 clamp(10px, 2.5vw, 24px)',
+          gap: 'clamp(8px, 2vw, 16px)',
         }}
         role="banner"
       >
@@ -294,7 +298,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             }
           }}
           aria-label={sidebarOpen || showMobileNav ? 'Close menu' : 'Open menu'}
-          style={{ padding: '6px' }}
+          style={{ padding: '8px', minWidth: '40px', minHeight: '40px' }}
         >
           {sidebarOpen || showMobileNav ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -305,9 +309,10 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            gap: 10,
             textDecoration: 'none',
-            flexShrink: 0,
+            flexShrink: 1,
+            minWidth: 0,
           }}
           aria-label="Bharat Civic Connect home"
         >
@@ -315,8 +320,8 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             src="/logo.jpg"
             alt="Bharat Civic Connect Emblem"
             style={{
-              width: 48,
-              height: 48,
+              width: 42,
+              height: 42,
               borderRadius: '50%',
               objectFit: 'cover',
               border: '2px solid rgba(18,59,99,0.15)',
@@ -324,25 +329,32 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
               flexShrink: 0,
             }}
           />
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div
               style={{
-                fontSize: '1.125rem',
+                fontSize: 'clamp(0.925rem, 3.4vw, 1.125rem)',
                 fontWeight: 750,
                 color: 'var(--color-primary)',
                 lineHeight: 1.15,
                 letterSpacing: '-0.01em',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               Bharat Civic Connect
             </div>
             <div
+              className="hide-mobile"
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.725rem',
                 color: 'var(--color-text-secondary)',
                 fontWeight: 500,
                 lineHeight: 1.2,
                 marginTop: 1,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               भारत नागरिक सेवा · Government of Maharashtra
@@ -536,14 +548,14 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                   fontWeight: 650,
                 }}
               >
-                {user.name?.[0] || 'U'}
+                {typeof user?.name === 'string' ? (user.name[0] || 'U') : 'U'}
               </div>
               <div className="hide-mobile" style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
-                  {user.name?.split(' ')[0]}
+                  {typeof user?.name === 'string' ? user.name.split(' ')[0] : 'User'}
                 </div>
                 <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'capitalize' }}>
-                  {role}
+                  {typeof role === 'string' ? role : (role?.role || 'citizen')}
                 </div>
               </div>
               <ChevronDown size={14} style={{ color: 'var(--color-text-secondary)' }} />
@@ -567,10 +579,10 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                 role="menu"
               >
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
-                  <p style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>{user.name}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>{user.email}</p>
+                  <p style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>{typeof user?.name === 'string' ? user.name : 'User'}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>{typeof user?.email === 'string' ? user.email : ''}</p>
                   <span className="badge status-submitted" style={{ marginTop: 6, textTransform: 'capitalize', fontSize: '0.7rem' }}>
-                    {role}
+                    {typeof role === 'string' ? role : (role?.role || 'citizen')}
                   </span>
                 </div>
                 <Link
@@ -604,10 +616,10 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
             <Link
               to="/login"
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm hide-mobile"
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 600,
@@ -618,8 +630,21 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
               Login
             </Link>
             <Link
+              to="/login"
+              className="btn btn-outline btn-sm hide-desktop"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                padding: '6px 12px',
+                borderColor: 'var(--color-border-dark)',
+              }}
+              aria-label="Login"
+            >
+              Login
+            </Link>
+            <Link
               to="/register"
-              className="btn btn-sm"
+              className="btn btn-sm hide-mobile"
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 650,
@@ -638,51 +663,85 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
 
       {/* Mobile Navigation Drawer for logged-out / public users */}
       {!user && showMobileNav && (
-        <div
-          className="hide-desktop"
-          style={{
-            background: '#ffffff',
-            borderBottom: '2px solid var(--color-primary)',
-            boxShadow: 'var(--shadow-md)',
-            padding: '12px 16px 16px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {publicNavLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setShowMobileNav(false)}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 6,
-                  color: isActive(link.to) ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                  fontWeight: isActive(link.to) ? 650 : 500,
-                  fontSize: '0.9rem',
-                  textDecoration: 'none',
-                  background: isActive(link.to) ? '#eef4fa' : 'transparent',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div style={{ borderTop: '1px solid var(--color-border)', margin: '8px 0', paddingTop: 8, display: 'flex', gap: 8 }}>
-              <Link
-                to="/login"
-                onClick={() => setShowMobileNav(false)}
-                className="btn btn-primary"
-                style={{ flex: 1, justifyContent: 'center', fontSize: '0.85rem' }}
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setShowMobileNav(false)}
-                className="btn"
-                style={{ flex: 1, justifyContent: 'center', fontSize: '0.85rem', background: 'var(--color-accent)', color: '#fff' }}
-              >
-                Register
-              </Link>
+        <div className="hide-desktop" style={{ position: 'fixed', inset: 0, zIndex: 300 }}>
+          {/* Backdrop */}
+          <div
+            style={{ position: 'absolute', inset: 0, background: 'rgba(9, 34, 62, 0.45)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setShowMobileNav(false)}
+            aria-hidden="true"
+          />
+          <div
+            style={{
+              position: 'relative',
+              background: '#ffffff',
+              borderBottom: '3px solid var(--color-primary)',
+              boxShadow: 'var(--shadow-lg)',
+              padding: '16px 20px 20px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Mobile Search Bar inside Drawer */}
+            <form
+              onSubmit={(e) => {
+                handleSearchSubmit(e);
+                setShowMobileNav(false);
+              }}
+              className="search-box"
+              style={{ width: '100%', marginBottom: 14 }}
+            >
+              <Search size={16} aria-hidden="true" style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+              <input
+                type="search"
+                value={searchVal}
+                onChange={e => setSearchVal(e.target.value)}
+                placeholder="Search complaint ID..."
+                aria-label="Search complaint ID"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </form>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {publicNavLinks.map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setShowMobileNav(false)}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    color: isActive(link.to) ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                    fontWeight: isActive(link.to) ? 700 : 500,
+                    fontSize: '0.95rem',
+                    textDecoration: 'none',
+                    background: isActive(link.to) ? '#eef4fa' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{link.label}</span>
+                  {isActive(link.to) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)' }} />}
+                </Link>
+              ))}
+              <div style={{ borderTop: '1px solid var(--color-border)', margin: '10px 0', paddingTop: 12, display: 'flex', gap: 10 }}>
+                <Link
+                  to="/login"
+                  onClick={() => setShowMobileNav(false)}
+                  className="btn btn-outline"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px' }}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setShowMobileNav(false)}
+                  className="btn"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px', background: 'var(--color-accent)', color: '#fff' }}
+                >
+                  Register
+                </Link>
+              </div>
             </div>
           </div>
         </div>

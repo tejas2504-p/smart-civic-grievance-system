@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Mail, 
-  Smartphone, 
-  CheckCircle, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  Clock, 
+import {
+  Mail,
+  Smartphone,
+  CheckCircle,
+  Lock,
+  Eye,
+  EyeOff,
+  Clock,
   ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -145,26 +145,26 @@ export default function ForgotPasswordPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 3vw, 32px) clamp(10px, 2.5vw, 20px)' }}>
         <div style={{ width: '100%', maxWidth: 460 }}>
 
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 12, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-            
+
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: '24px', textAlign: 'center' }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                <Lock size={24} color="#fff" />
+            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <Lock size={22} color="#fff" />
               </div>
-              <h1 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 750, marginBottom: 4 }}>
+              <h1 style={{ color: '#fff', fontSize: 'clamp(1.1rem, 3.5vw, 1.2rem)', fontWeight: 750, marginBottom: 4 }}>
                 Reset Account Password
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8125rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(0.75rem, 2.5vw, 0.8125rem)' }}>
                 Secure OTP-based password recovery
               </p>
             </div>
 
-            <div style={{ padding: '28px' }}>
-              
+            <div style={{ padding: 'clamp(16px, 4vw, 28px)' }}>
+
               {/* STEP 1: SELECT CHANNEL, ENTER TARGET & SOLVE CAPTCHA */}
               {step === 1 && (
                 <form onSubmit={handleSendOTP}>
@@ -179,13 +179,13 @@ export default function ForgotPasswordPage() {
                       onClick={() => { setChannel('email'); setTarget(''); }}
                       style={{
                         flex: 1,
-                        padding: '8px 12px',
+                        padding: '8px 10px',
                         borderRadius: 6,
                         border: channel === 'email' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         background: channel === 'email' ? '#EEF4FA' : '#fff',
                         color: channel === 'email' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                         fontWeight: channel === 'email' ? 700 : 500,
-                        fontSize: '0.8125rem',
+                        fontSize: 'clamp(0.75rem, 2.6vw, 0.8125rem)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -202,13 +202,13 @@ export default function ForgotPasswordPage() {
                       onClick={() => { setChannel('mobile'); setTarget(''); }}
                       style={{
                         flex: 1,
-                        padding: '8px 12px',
+                        padding: '8px 10px',
                         borderRadius: 6,
                         border: channel === 'mobile' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         background: channel === 'mobile' ? '#EEF4FA' : '#fff',
                         color: channel === 'mobile' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                         fontWeight: channel === 'mobile' ? 700 : 500,
-                        fontSize: '0.8125rem',
+                        fontSize: 'clamp(0.75rem, 2.6vw, 0.8125rem)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',

@@ -170,21 +170,21 @@ export default function ComplaintDetailPage() {
       <Breadcrumb items={[{ label: 'Home', href: '/dashboard' }, { label: 'My Complaints', href: '/complaints' }, { label: complaint.id }]} />
 
       {/* Header */}
-      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px', marginBottom: 20 }}>
+      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)', marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--color-primary)', fontWeight: 700, background: '#e8f4fd', padding: '3px 10px', borderRadius: 4 }}>
                 {complaint.id}
               </span>
               <PriorityBadge priority={complaint.priority} />
               <StatusBadge status={complaint.status} />
             </div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
+            <h1 style={{ fontSize: 'clamp(1.1rem, 3.5vw, 1.25rem)', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
               {complaint.title}
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -202,13 +202,13 @@ export default function ComplaintDetailPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
+      <div className="grid-responsive-sidebar">
         {/* Main content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Complaint info */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
             <h2 className="section-title" style={{ marginBottom: 16 }}>Complaint Information</h2>
-            <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '12px 16px', fontSize: '0.875rem' }}>
+            <dl className="responsive-dl" style={{ fontSize: '0.875rem' }}>
               {[
                 { label: 'Complaint ID', value: complaint.id },
                 { label: 'Category', value: complaint.category },
@@ -232,9 +232,9 @@ export default function ComplaintDetailPage() {
           </div>
 
           {/* Remarks & Citizen Communication */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
             <h2 className="section-title" style={{ marginBottom: 14 }}>Citizen Remarks & Communication</h2>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input
                 type="text"
                 className="form-input"
@@ -242,7 +242,7 @@ export default function ComplaintDetailPage() {
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                style={{ flex: 1 }}
+                style={{ flex: '1 1 200px' }}
               />
               <button className="btn btn-primary btn-sm" onClick={sendMessage} aria-label="Send remark">
                 <Send size={14} /> Send
@@ -252,7 +252,7 @@ export default function ComplaintDetailPage() {
 
           {/* Feedback */}
           {showFeedback && (
-            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
               <h2 className="section-title" style={{ marginBottom: 6 }}>Rate Your Experience</h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 20 }}>
                 Was your issue resolved satisfactorily? Please share your feedback.

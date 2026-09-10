@@ -115,6 +115,34 @@ Security Warning: Government officials will never ask you for your verification 
 
     if (response.error) {
       console.error(`❌ [Resend Email Service Error]: ${response.error.message || JSON.stringify(response.error)}`);
+
+      // If Resend fails due to free sandbox tier restriction (can only send to account owner's email)
+      const errorMsg = response.error.message || '';
+      const isSandboxRestriction =
+        errorMsg.includes('only send testing emails') ||
+        errorMsg.includes('verify a domain') ||
+        response.error.statusCode === 403;
+      const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.OTP_DEMO_MODE !== 'false';
+
+      if (isSandboxRestriction && isDevOrDemo) {
+        console.log(`
+  ===================================================================
+  📧 [DEV / DEMO MODE EMAIL OTP]
+  To: ${cleanEmail}
+  🔑 OTP Verification Code: ${otp}
+  ⚠️ Notice: Resend Sandbox (${fromEmail}) delivers only to sahilnarkar121105@gmail.com.
+  💡 Enter code [ ${otp} ] in the web portal to verify.
+  ===================================================================
+        `);
+        return {
+          success: true,
+          deliveredOtp: otp,
+          isDevSimulated: true,
+          devEmailOtp: otp,
+          messageId: 'dev_sandbox_' + Date.now(),
+        };
+      }
+
       return {
         success: false,
         error: response.error.message || "We couldn't send the email verification code. Please try again.",
@@ -122,12 +150,33 @@ Security Warning: Government officials will never ask you for your verification 
     }
 
     console.log(`📧 [Resend Email Service] Verification OTP email dispatched successfully to ${masked} [ID: ${response.data?.id || 'sent'}]`);
+    console.log(`🔑 [Email OTP for ${cleanEmail}]: ${otp}`);
     return {
       success: true,
+      deliveredOtp: otp,
+      devEmailOtp: otp,
       messageId: response.data?.id,
     };
   } catch (error) {
     console.error(`❌ [Resend Email Service Exception]: ${error.message}`);
+    const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.OTP_DEMO_MODE !== 'false';
+    if (isDevOrDemo) {
+      console.log(`
+  ===================================================================
+  📧 [DEV / DEMO MODE EMAIL OTP (Fallback)]
+  To: ${cleanEmail}
+  🔑 OTP Verification Code: ${otp}
+  💡 Enter code [ ${otp} ] in the web portal to verify.
+  ===================================================================
+      `);
+      return {
+        success: true,
+        deliveredOtp: otp,
+        isDevSimulated: true,
+        devEmailOtp: otp,
+        messageId: 'dev_fallback_' + Date.now(),
+      };
+    }
     return {
       success: false,
       error: "We couldn't send the email verification code. Please try again.",

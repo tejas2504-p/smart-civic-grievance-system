@@ -95,5 +95,20 @@
     "date": "Date",
     "time": "Time",
     "required": "This field is required"
+  },
+  "help": {
+    "title": "Help & Citizen Support Services",
+    "subtitle": "Get instant assistance through government grievance helplines and officers"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid 10-digit Indian mobile number",
+    "passwordMin": "Password must be at least 6 characters",
+    "passwordMatch": "Passwords do not match",
+    "captchaRequired": "Please complete the security check (CAPTCHA)",
+    "otpExpired": "Security OTP has expired. Please request a fresh code.",
+    "otpInvalid": "Invalid verification OTP code. Please try again.",
+    "networkError": "Network error. Please check your connection and retry."
   }
 }

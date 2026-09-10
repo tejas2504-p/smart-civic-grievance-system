@@ -4,6 +4,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../store/AuthContext';
 import { Toaster } from 'sonner';
+import ScrollToTop from '../ui/ScrollToTop';
 
 export default function AppShell() {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ export default function AppShell() {
             flex: 1,
             overflowY: 'auto',
             overflowX: 'hidden',
-            padding: user ? '24px' : '0',
+            padding: user ? 'clamp(12px, 2.5vw, 24px)' : '0',
             background: 'var(--color-bg)',
           }}
         >
@@ -50,6 +51,7 @@ export default function AppShell() {
           }
         }}
       />
+      <ScrollToTop />
     </div>
   );
 }

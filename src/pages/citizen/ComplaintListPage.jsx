@@ -81,8 +81,8 @@ export default function ComplaintListPage() {
 
       <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
         {/* Filters row */}
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search by ID, title, category, department..." style={{ flex: 1, minWidth: 220 }} />
+        <div style={{ padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <SearchBox value={search} onChange={setSearch} placeholder="Search by ID, title, category, department..." style={{ flex: 1, minWidth: 200 }} />
           {search && (
             <button className="btn btn-ghost btn-sm" onClick={() => setSearch('')}>
               Clear Search
@@ -91,7 +91,7 @@ export default function ComplaintListPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ padding: '0 20px' }}>
+        <div style={{ padding: '0 clamp(12px, 3vw, 20px)' }}>
           <TabList tabs={tabs} active={activeTab} onChange={v => { setActiveTab(v); setPage(1); }} />
         </div>
 
@@ -102,7 +102,7 @@ export default function ComplaintListPage() {
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Loading your complaints...</p>
           </div>
         ) : paginated.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="data-table-wrapper">
             <table className="data-table">
               <thead>
                 <tr>

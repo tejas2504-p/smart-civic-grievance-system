@@ -11,16 +11,16 @@ export default function HelpPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: '24px 0 48px' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: 'clamp(16px, 3vw, 24px) 0 48px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 clamp(12px, 3vw, 24px)' }}>
         <div style={{ marginBottom: 20 }}>
           <Link to="/" style={{ color: 'var(--color-secondary)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
             <ArrowLeft size={16} /> Back to Home
           </Link>
         </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h1 style={{ fontSize: 'clamp(1.35rem, 4vw, 1.75rem)', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8 }}>
             Help & Support
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9375rem' }}>
@@ -28,14 +28,14 @@ export default function HelpPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 40 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: 16, marginBottom: 32 }}>
           {[
             { icon: Phone, label: 'Helpline', value: '1800-XXX-XXXX', sub: 'Toll-free · Mon–Sat, 9AM–6PM', color: '#e8f4fd', iconColor: 'var(--color-secondary)' },
             { icon: Mail, label: 'Email Support', value: 'grievance@mh.gov.in', sub: 'Response within 24 hours', color: '#fff3e0', iconColor: 'var(--color-warning)' },
             { icon: Clock, label: 'Working Hours', value: '9:00 AM – 6:00 PM', sub: 'Monday to Saturday', color: 'var(--color-success-light)', iconColor: 'var(--color-success)' },
             { icon: MapPin, label: 'Office Address', value: 'Mantralaya, Mumbai', sub: 'Maharashtra State', color: '#e8eaf6', iconColor: '#3f51b5' },
           ].map((item, i) => (
-            <div key={i} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px' }}>
+            <div key={i} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px' }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, color: item.iconColor }}>
                 <item.icon size={20} />
               </div>
@@ -47,11 +47,11 @@ export default function HelpPage() {
         </div>
 
         {/* Contact form */}
-        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 4vw, 28px)' }}>
           <h2 style={{ fontSize: '1.0625rem', fontWeight: 700, marginBottom: 6 }}>Send us a message</h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 20 }}>Fill in the form and our support team will get back to you.</p>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <div className="grid-responsive-form">
               <div style={{ marginBottom: 16 }}>
                 <label className="form-label" htmlFor="help-name">Your Name <span className="required">*</span></label>
                 <input id="help-name" type="text" className="form-input" placeholder="Full name" required />

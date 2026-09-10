@@ -113,6 +113,12 @@ function AppRoutes() {
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 export default function App() {
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.dismissPreloader) {
+      window.dismissPreloader();
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <BrowserRouter>

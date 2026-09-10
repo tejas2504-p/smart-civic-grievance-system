@@ -196,7 +196,7 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
       <div 
         className="ad-marquee-modal-card"
         onClick={e => e.stopPropagation()}
-        style={{ maxWidth: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+        style={{ maxWidth: 'min(640px, calc(100vw - 20px))', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >
         {/* Header */}
         <div className="ad-marquee-modal-header" style={{ background: '#09223e', color: '#fff', borderBottom: 'none' }}>
@@ -223,11 +223,11 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
         </div>
 
         {/* Tab Navigation */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: '#f8fafc', padding: '0 16px' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: '#f8fafc', padding: '0 12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexWrap: 'nowrap' }}>
           <button
             onClick={() => setActiveTab('reader')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               fontSize: '0.85rem',
               fontWeight: activeTab === 'reader' ? 650 : 500,
               color: activeTab === 'reader' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
@@ -239,7 +239,9 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             <Volume2 size={15} />
@@ -249,7 +251,7 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
           <button
             onClick={() => setActiveTab('table')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               fontSize: '0.85rem',
               fontWeight: activeTab === 'table' ? 650 : 500,
               color: activeTab === 'table' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
@@ -261,7 +263,9 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             <HelpCircle size={15} />
@@ -271,7 +275,7 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
           <button
             onClick={() => setActiveTab('shortcuts')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               fontSize: '0.85rem',
               fontWeight: activeTab === 'shortcuts' ? 650 : 500,
               color: activeTab === 'shortcuts' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
@@ -283,7 +287,9 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             <Keyboard size={15} />

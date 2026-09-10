@@ -83,7 +83,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* KPI Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))', gap: 14, marginBottom: 24 }}>
         <StatCard label="Total Complaints" value={stats.total.toLocaleString()} icon={FileText} iconBg="#e8f4fd" iconColor="var(--color-secondary)" />
         <StatCard label="Today's Complaints" value={stats.today} icon={TrendingUp} iconBg="#fff3e0" iconColor="var(--color-warning)" trend={{ up: true, label: '+12% vs yesterday' }} />
         <StatCard label="Pending" value={stats.pending.toLocaleString()} icon={Clock} iconBg="#fff3e0" iconColor="var(--color-warning)" />
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts row 1 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="grid-responsive-charts" style={{ marginBottom: 20 }}>
         <ChartCard title="Complaints Over Time" subtitle="Monthly complaints vs resolved">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={complaintsOverTime} margin={{ top: 0, right: 8, bottom: 0, left: -10 }}>
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts row 2 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="grid-responsive-charts" style={{ marginBottom: 20 }}>
         <ChartCard title="Complaints by Department" subtitle="Total vs resolved per department">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={stats.deptData} margin={{ top: 0, right: 8, bottom: 0, left: -10 }}>
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick links */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))', gap: 12 }}>
         {[
           { label: 'Manage Departments', to: '/admin/departments', icon: Building2 },
           { label: 'Manage Officers', to: '/admin/officers', icon: Users },

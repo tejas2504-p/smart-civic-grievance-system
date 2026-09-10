@@ -96,7 +96,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
               {role === 'admin' ? 'Admin Panel' : role === 'officer' ? 'Officer Panel' : 'Citizen Portal'}
             </p>
             <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
-              {user.name?.split(' ')[0]}
+              {typeof user?.name === 'string' ? user.name.split(' ')[0] : 'User'}
             </p>
           </div>
         )}
@@ -138,28 +138,28 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
   // Mobile drawer overlay
   const mobileDrawer = mobileOpen ? (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300 }} className="hide-desktop">
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} aria-hidden="true" />
-      <aside style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 260, background: 'var(--color-sidebar-bg)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }} aria-label="Mobile navigation">
-        <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(9, 34, 62, 0.45)', backdropFilter: 'blur(2px)' }} onClick={onClose} aria-hidden="true" />
+      <aside style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 'min(280px, 82vw)', background: 'var(--color-sidebar-bg)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }} aria-label="Mobile navigation">
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>
+            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {role === 'admin' ? 'Admin Panel' : role === 'officer' ? 'Officer Panel' : 'Citizen Portal'}
             </p>
-            <p style={{ fontWeight: 600, color: '#fff', fontSize: '0.875rem' }}>{user.name}</p>
+            <p style={{ fontWeight: 650, color: '#fff', fontSize: '0.9rem', marginTop: 2 }}>{typeof user?.name === 'string' ? user.name : 'User'}</p>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close menu" style={{ color: 'rgba(255,255,255,0.7)' }}>✕</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close menu" style={{ color: 'rgba(255,255,255,0.85)', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
+        <nav style={{ flex: 1, padding: '10px 0', overflowY: 'auto' }}>
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} onClick={onClose} className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`} style={item.accent ? { color: '#f5a623' } : undefined}>
-              <item.icon size={18} className="icon" />
+            <NavLink key={item.to} to={item.to} onClick={onClose} className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`} style={{ ...(item.accent ? { color: '#f5a623' } : {}), padding: '12px 18px', fontSize: '0.925rem' }}>
+              <item.icon size={19} className="icon" />
               <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
-        <div style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: 'rgba(255,100,100,0.9)' }}>
-            <LogOut size={18} className="icon" />
+        <div style={{ padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: 'rgba(255,120,120,0.95)', padding: '12px 18px', fontSize: '0.925rem' }}>
+            <LogOut size={19} className="icon" />
             <span>Logout</span>
           </button>
         </div>

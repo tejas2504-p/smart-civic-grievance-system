@@ -109,7 +109,7 @@ export default function OfficerComplaintDetail() {
       <Breadcrumb items={[{ label: 'Dashboard', href: '/officer' }, { label: 'Complaints', href: '/officer/complaints' }, { label: complaint.id }]} />
 
       {/* Header */}
-      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px', marginBottom: 20 }}>
+      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
@@ -117,7 +117,7 @@ export default function OfficerComplaintDetail() {
               <PriorityBadge priority={complaint.priority} />
               <StatusBadge status={status} />
             </div>
-            <h1 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{complaint.title}</h1>
+            <h1 style={{ fontSize: 'clamp(1.05rem, 3vw, 1.125rem)', fontWeight: 700, color: 'var(--color-text-primary)' }}>{complaint.title}</h1>
           </div>
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -145,10 +145,10 @@ export default function OfficerComplaintDetail() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="grid-responsive-sidebar">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Citizen info */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
             <h2 className="section-title" style={{ marginBottom: 16 }}>Citizen Information</h2>
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.25rem', flexShrink: 0 }}>
@@ -164,9 +164,9 @@ export default function OfficerComplaintDetail() {
           </div>
 
           {/* Complaint details */}
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
             <h2 className="section-title" style={{ marginBottom: 16 }}>Complaint Details</h2>
-            <dl style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '10px 16px', fontSize: '0.875rem', marginBottom: 16 }}>
+            <dl className="responsive-dl" style={{ fontSize: '0.875rem', marginBottom: 16 }}>
               <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Category</dt>
               <dd>{complaint.category}</dd>
               <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Priority</dt>

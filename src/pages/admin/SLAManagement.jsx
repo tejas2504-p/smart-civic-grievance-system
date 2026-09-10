@@ -31,7 +31,7 @@ export default function SLAManagement() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 16, marginBottom: 24 }}>
         {configs.map((sla, i) => {
           const colors = priorityColors[sla.priority];
           return (
@@ -76,9 +76,9 @@ export default function SLAManagement() {
       </div>
 
       {/* Escalation rules */}
-      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+      <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
         <h2 className="section-title" style={{ marginBottom: 16 }}>Escalation Rules</h2>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
               <tr>

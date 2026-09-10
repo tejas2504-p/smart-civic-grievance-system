@@ -69,7 +69,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))', gap: 14, marginBottom: 24 }}>
         <KPICard label="Resolution Rate" value="79" unit="%" trend={{ up: true, label: '+3.2% vs last month' }} />
         <KPICard label="Avg Resolution Time" value="4.2" unit=" days" trend={{ up: false, label: '-0.8 days improvement' }} />
         <KPICard label="Citizen Satisfaction" value="4.1" unit="/5" trend={{ up: true, label: '+0.3 vs last month' }} />
@@ -78,8 +78,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px' }}>
+      <div className="grid-responsive-charts" style={{ marginBottom: 20 }}>
+        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(14px, 3vw, 20px)' }}>
           <h2 className="section-title" style={{ marginBottom: 4 }}>Complaints Trend</h2>
           <p className="section-subtitle" style={{ marginBottom: 16 }}>Monthly volume with resolved overlay</p>
           <ResponsiveContainer width="100%" height={220}>
@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(14px, 3vw, 20px)' }}>
           <h2 className="section-title" style={{ marginBottom: 4 }}>Department Resolution vs Target</h2>
           <p className="section-subtitle" style={{ marginBottom: 16 }}>Actual rate vs 90% target</p>
           <ResponsiveContainer width="100%" height={220}>

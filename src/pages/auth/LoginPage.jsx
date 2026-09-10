@@ -5,15 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../store/AuthContext';
 import { toast } from 'sonner';
-import { 
-  Eye, 
-  EyeOff, 
-  Shield, 
-  Mail, 
-  Smartphone, 
-  KeyRound, 
-  ArrowLeft, 
-  Clock, 
+import {
+  Eye,
+  EyeOff,
+  Shield,
+  Mail,
+  Smartphone,
+  KeyRound,
+  ArrowLeft,
+  Clock,
   Lock
 } from 'lucide-react';
 import { Spinner } from '../../components/ui/SharedComponents';
@@ -32,7 +32,7 @@ export default function LoginPage() {
 
   // Mode: 'password' | 'otp'
   const [authMode, setAuthMode] = useState('password');
-  
+
   // Password Mode States
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,6 +150,11 @@ export default function LoginPage() {
         setCountdown(res.expiresIn ? Math.min(res.expiresIn, 60) : 60);
 
         toast.success(`🔐 Security OTP dispatched to your ${otpChannel === 'email' ? 'Email' : 'Mobile Number'}!`);
+        if (res.devOtp || res.devEmailOtp) {
+          const code = res.devOtp || res.devEmailOtp;
+          setOtpCode(code);
+          toast.info(`Demo/Dev Mode: Your OTP is ${code}`, { duration: 8000 });
+        }
       }
     } catch (err) {
       toast.error(err.message || 'Failed to send OTP. Please check your contact and try again.');
@@ -196,21 +201,21 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 3vw, 32px) clamp(10px, 2.5vw, 20px)' }}>
         <div style={{ width: '100%', maxWidth: 450 }}>
 
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 12, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
             {/* Card Header */}
-            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: '24px', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
               <img
                 src="/logo.jpg"
                 alt="Logo"
-                style={{ width: 64, height: 64, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover', margin: '0 auto 10px', display: 'block' }}
+                style={{ width: 60, height: 60, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover', margin: '0 auto 10px', display: 'block' }}
               />
-              <h1 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 750, marginBottom: 4 }}>
+              <h1 style={{ color: '#fff', fontSize: 'clamp(1.1rem, 3.5vw, 1.25rem)', fontWeight: 750, marginBottom: 4 }}>
                 Citizen Portal Sign In
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(0.75rem, 2.5vw, 0.8125rem)' }}>
                 Government of Maharashtra · Smart Grievance Redressal
               </p>
             </div>
@@ -221,8 +226,8 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setAuthMode('password')}
                 style={{
-                  padding: '12px',
-                  fontSize: '0.875rem',
+                  padding: '12px 6px',
+                  fontSize: 'clamp(0.75rem, 2.8vw, 0.875rem)',
                   fontWeight: authMode === 'password' ? 700 : 500,
                   color: authMode === 'password' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                   borderBottom: authMode === 'password' ? '2px solid var(--color-primary)' : '2px solid transparent',
@@ -245,8 +250,8 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setAuthMode('otp')}
                 style={{
-                  padding: '12px',
-                  fontSize: '0.875rem',
+                  padding: '12px 6px',
+                  fontSize: 'clamp(0.75rem, 2.8vw, 0.875rem)',
                   fontWeight: authMode === 'otp' ? 700 : 500,
                   color: authMode === 'otp' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                   borderBottom: authMode === 'otp' ? '2px solid var(--color-primary)' : '2px solid transparent',
@@ -267,7 +272,7 @@ export default function LoginPage() {
             </div>
 
             {/* Form Container */}
-            <div style={{ padding: '24px 28px' }}>
+            <div style={{ padding: 'clamp(16px, 4vw, 28px)' }}>
               {/* TAB 1: PASSWORD LOGIN */}
               {authMode === 'password' && (
                 <form onSubmit={handleSubmit(onPasswordSubmit)} noValidate>
@@ -507,11 +512,11 @@ export default function LoginPage() {
             </div>
 
             {/* Quick Role Fill Shortcuts */}
-            <div style={{ padding: '12px 20px', background: '#F8FAFC', borderTop: '1px solid var(--color-border)', fontSize: '0.75rem' }}>
+            <div style={{ padding: '12px clamp(12px, 3vw, 20px)', background: '#F8FAFC', borderTop: '1px solid var(--color-border)', fontSize: '0.75rem' }}>
               <div style={{ fontWeight: 650, color: 'var(--color-primary)', marginBottom: 6 }}>
                 <span>Quick Role Credentials (Click to Autofill):</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
                 <button
                   type="button"
                   onClick={() => {

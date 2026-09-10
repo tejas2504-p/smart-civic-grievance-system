@@ -24,7 +24,7 @@ export default function CategoryManagement() {
         {categories.map(cat => (
           <div key={cat.id} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
             <div
-              style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+              style={{ padding: '14px clamp(12px, 3vw, 20px)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
               onClick={() => setExpanded(expanded === cat.id ? null : cat.id)}
               role="button"
               tabIndex={0}
@@ -48,7 +48,7 @@ export default function CategoryManagement() {
               </div>
             </div>
             {expanded === cat.id && (
-              <div style={{ padding: '0 20px 16px', borderTop: '1px solid var(--color-border)' }}>
+              <div style={{ padding: '0 clamp(12px, 3vw, 20px) 16px', borderTop: '1px solid var(--color-border)' }}>
                 <div style={{ marginTop: 12 }}>
                   <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>Subcategories</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

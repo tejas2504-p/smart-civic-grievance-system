@@ -4,14 +4,14 @@ import { cn } from '../../lib/utils';
 // StatusBadge — always shows text AND color (WCAG compliant)
 export function StatusBadge({ status }) {
   const map = {
-    'Submitted':    { cls: 'status-submitted', emoji: '📋' },
-    'Under Review': { cls: 'status-review',    emoji: '🔍' },
-    'Assigned':     { cls: 'status-assigned',  emoji: '👤' },
-    'In Progress':  { cls: 'status-inprogress',emoji: '⚙️' },
-    'Resolved':     { cls: 'status-resolved',  emoji: '✅' },
-    'Closed':       { cls: 'status-closed',    emoji: '🔒' },
-    'Reopened':     { cls: 'status-reopened',  emoji: '🔄' },
-    'Escalated':    { cls: 'status-escalated', emoji: '⚠️' },
+    'Submitted': { cls: 'status-submitted', emoji: '📋' },
+    'Under Review': { cls: 'status-review', emoji: '🔍' },
+    'Assigned': { cls: 'status-assigned', emoji: '👤' },
+    'In Progress': { cls: 'status-inprogress', emoji: '⚙️' },
+    'Resolved': { cls: 'status-resolved', emoji: '✅' },
+    'Closed': { cls: 'status-closed', emoji: '🔒' },
+    'Reopened': { cls: 'status-reopened', emoji: '🔄' },
+    'Escalated': { cls: 'status-escalated', emoji: '⚠️' },
   };
   const info = map[status] || { cls: 'status-submitted', emoji: '📋' };
   return (
@@ -26,9 +26,9 @@ export function StatusBadge({ status }) {
 export function PriorityBadge({ priority }) {
   const map = {
     'Critical': { color: '#C62828', bg: '#ffebee', border: '#ef9a9a', emoji: '🔴' },
-    'High':     { color: '#ED6C02', bg: '#fff3e0', border: '#ffcc80', emoji: '🟠' },
-    'Medium':   { color: '#7b5e00', bg: '#fffde7', border: '#fff176', emoji: '🟡' },
-    'Low':      { color: '#2E7D32', bg: '#e8f5e9', border: '#a5d6a7', emoji: '🟢' },
+    'High': { color: '#ED6C02', bg: '#fff3e0', border: '#ffcc80', emoji: '🟠' },
+    'Medium': { color: '#7b5e00', bg: '#fffde7', border: '#fff176', emoji: '🟡' },
+    'Low': { color: '#2E7D32', bg: '#e8f5e9', border: '#a5d6a7', emoji: '🟢' },
   };
   const info = map[priority] || map['Low'];
   return (
@@ -160,11 +160,11 @@ export function StatCard({ label, value, icon: Icon, iconBg, iconColor, trend })
 // Breadcrumb
 export function Breadcrumb({ items }) {
   return (
-    <nav className="breadcrumb" aria-label="Breadcrumb">
+    <nav className="breadcrumb" aria-label="Breadcrumb" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', paddingBottom: 2, marginBottom: 14 }}>
       {items.map((item, i) => (
         <React.Fragment key={i}>
-          {i > 0 && <span aria-hidden="true">/</span>}
-          {item.href ? <a href={item.href}>{item.label}</a> : <span style={{ color: 'var(--color-text-primary)' }}>{item.label}</span>}
+          {i > 0 && <span aria-hidden="true" style={{ margin: '0 2px' }}>/</span>}
+          {item.href ? <a href={item.href}>{item.label}</a> : <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{item.label}</span>}
         </React.Fragment>
       ))}
     </nav>
@@ -174,7 +174,7 @@ export function Breadcrumb({ items }) {
 // Tabs
 export function TabList({ tabs, active, onChange }) {
   return (
-    <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border)', gap: 0 }} role="tablist">
+    <div style={{ display: 'flex', borderBottom: '2px solid var(--color-border)', gap: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: '100%', flexWrap: 'nowrap' }} role="tablist">
       {tabs.map(tab => (
         <button
           key={tab.value}
@@ -187,8 +187,10 @@ export function TabList({ tabs, active, onChange }) {
             borderBottom: active === tab.value ? '2px solid var(--color-primary)' : '2px solid transparent',
             marginBottom: -2,
             color: active === tab.value ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            fontWeight: active === tab.value ? 600 : 400,
-            padding: '10px 16px',
+            fontWeight: active === tab.value ? 650 : 500,
+            padding: '10px 14px',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           {tab.label}
@@ -229,7 +231,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search...', style })
   return (
     <div className="search-box" style={style}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
       </svg>
       <input type="search" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder} />
     </div>

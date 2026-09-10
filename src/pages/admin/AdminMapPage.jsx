@@ -28,7 +28,7 @@ export default function AdminMapPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20 }}>
+      <div className="grid-responsive-profile">
         {/* Filters & complaint list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Filters */}

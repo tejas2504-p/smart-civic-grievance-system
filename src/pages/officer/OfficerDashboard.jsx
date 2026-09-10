@@ -46,7 +46,7 @@ export default function OfficerDashboard() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 'clamp(1.2rem, 3.5vw, 1.375rem)', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 4 }}>
           {greeting}, {user?.name?.split(' ')[0] || 'Officer'} 👋
         </h1>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
@@ -55,7 +55,7 @@ export default function OfficerDashboard() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))', gap: 14, marginBottom: 28 }}>
         <StatCard label="Assigned" value={assigned} icon={FileText} iconBg="#e8f4fd" iconColor="var(--color-secondary)" />
         <StatCard label="Pending" value={pending} icon={Clock} iconBg="#fff3e0" iconColor="var(--color-warning)" />
         <StatCard label="In Progress" value={inProgress} icon={AlertTriangle} iconBg="#e3f2fd" iconColor="var(--color-secondary)" />
@@ -66,16 +66,16 @@ export default function OfficerDashboard() {
 
       {/* Complaints table */}
       <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ padding: 'clamp(12px, 2.5vw, 16px) clamp(12px, 3vw, 20px)', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <div>
             <h2 className="section-title">Assigned Complaints</h2>
           </div>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search complaints..." style={{ marginLeft: 'auto', width: 240 }} />
+          <SearchBox value={search} onChange={setSearch} placeholder="Search complaints..." style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: 260 }} />
         </div>
-        <div style={{ padding: '0 20px' }}>
+        <div style={{ padding: '0 clamp(12px, 3vw, 20px)' }}>
           <TabList tabs={tabs} active={activeTab} onChange={setActiveTab} />
         </div>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="data-table-wrapper">
           {loading ? (
             <div style={{ padding: '36px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading complaints...</div>
           ) : filtered.length === 0 ? (

@@ -7,16 +7,16 @@ export default function FAQPage() {
   const [open, setOpen] = useState(null);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: '24px 0 48px' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: 'clamp(16px, 3vw, 24px) 0 48px' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 clamp(12px, 3vw, 24px)' }}>
         <div style={{ marginBottom: 20 }}>
           <Link to="/" style={{ color: 'var(--color-secondary)', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
             <ArrowLeft size={16} /> Back to Home
           </Link>
         </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h1 style={{ fontSize: 'clamp(1.35rem, 4vw, 1.75rem)', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 8 }}>
             Frequently Asked Questions
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9375rem' }}>
@@ -29,7 +29,7 @@ export default function FAQPage() {
             <div key={i} style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                style={{ width: '100%', padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}
+                style={{ width: '100%', padding: '14px clamp(12px, 3vw, 20px)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}
                 aria-expanded={open === i}
                 aria-controls={`faq-${i}`}
                 id={`faq-btn-${i}`}
@@ -38,7 +38,7 @@ export default function FAQPage() {
                 {open === i ? <ChevronUp size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} /> : <ChevronDown size={18} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />}
               </button>
               {open === i && (
-                <div id={`faq-${i}`} role="region" aria-labelledby={`faq-btn-${i}`} style={{ padding: '0 20px 16px', borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
+                <div id={`faq-${i}`} role="region" aria-labelledby={`faq-btn-${i}`} style={{ padding: '0 clamp(12px, 3vw, 20px) 16px', borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
                   <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>{faq.answer}</p>
                 </div>
               )}
@@ -46,7 +46,7 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div style={{ marginTop: 40, textAlign: 'center', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px 24px' }}>
+        <div style={{ marginTop: 32, textAlign: 'center', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(18px, 4vw, 28px) clamp(14px, 3vw, 24px)' }}>
           <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 6 }}>Still have questions?</p>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginBottom: 20 }}>Our support team is here to help you.</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>

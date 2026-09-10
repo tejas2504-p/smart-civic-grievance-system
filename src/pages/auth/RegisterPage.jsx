@@ -5,14 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../store/AuthContext';
 import { toast } from 'sonner';
-import { 
-  Eye, 
-  EyeOff, 
-  Shield, 
-  CheckCircle2, 
-  Mail, 
-  Smartphone, 
-  Clock, 
+import {
+  Eye,
+  EyeOff,
+  Shield,
+  CheckCircle2,
+  Mail,
+  Smartphone,
+  Clock,
   ShieldCheck,
   RotateCw,
   ArrowLeft,
@@ -50,7 +50,7 @@ const Field = ({ id, label, error, required, children }) => (
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   // UI Steps: 1 = Details + CAPTCHA, 2 = OTP Verification, 3 = Complete
   const [step, setStep] = useState(1);
   const [showPwd, setShowPwd] = useState(false);
@@ -216,6 +216,11 @@ export default function RegisterPage() {
           duration: 6000,
         });
 
+        if (res.devEmailOtp) {
+          setEmailOtp(res.devEmailOtp);
+          toast.info(`Demo/Dev Mode: Your Email OTP is ${res.devEmailOtp}`, { duration: 8000 });
+        }
+
         // Join socket room
         if (socketRef.current) {
           socketRef.current.emit('join_verification', res.verificationId);
@@ -313,9 +318,12 @@ export default function RegisterPage() {
         setExpiresIn(res.expiresIn || 300);
         setResendCooldown(60);
         setPhoneOtp('');
-        setEmailOtp('');
+        setEmailOtp(res.devEmailOtp || '');
         if (res.resendsRemaining !== undefined) {
           setResendsRemaining(res.resendsRemaining);
+        }
+        if (res.devEmailOtp) {
+          toast.info(`Demo/Dev Mode: Your new Email OTP is ${res.devEmailOtp}`, { duration: 8000 });
         }
         toast.success('New OTP codes dispatched to your phone and email!');
       }
@@ -360,41 +368,41 @@ export default function RegisterPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '32px 20px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 'clamp(16px, 3vw, 32px) clamp(10px, 2.5vw, 20px)' }}>
         <div style={{ width: '100%', maxWidth: 660 }}>
 
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 12, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-            
+
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: '24px', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
               <img
                 src="/logo.jpg"
                 alt="Logo"
-                style={{ width: 64, height: 64, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover', margin: '0 auto 10px', display: 'block' }}
+                style={{ width: 60, height: 60, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', objectFit: 'cover', margin: '0 auto 10px', display: 'block' }}
               />
-              <h1 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 750, marginBottom: 4 }}>
+              <h1 style={{ color: '#fff', fontSize: 'clamp(1.1rem, 3.5vw, 1.25rem)', fontWeight: 750, marginBottom: 4 }}>
                 Citizen Portal Registration
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8125rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(0.75rem, 2.5vw, 0.8125rem)' }}>
                 Government of Maharashtra · Real-Time OTP & CAPTCHA Protected
               </p>
             </div>
 
             {/* Progress Stepper */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--color-border)', background: '#F8FAFC' }}>
-              <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: step === 1 ? '2px solid var(--color-primary)' : '2px solid transparent', color: step === 1 ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontWeight: step === 1 ? 700 : 500, fontSize: '0.825rem' }}>
-                <span style={{ width: 22, height: 22, borderRadius: '50%', background: step === 1 ? 'var(--color-primary)' : '#e2e8f0', color: step === 1 ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</span>
+              <div style={{ padding: '10px clamp(8px, 2vw, 16px)', display: 'flex', alignItems: 'center', gap: 8, borderBottom: step === 1 ? '2px solid var(--color-primary)' : '2px solid transparent', color: step === 1 ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontWeight: step === 1 ? 700 : 500, fontSize: 'clamp(0.725rem, 2.5vw, 0.825rem)' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: step === 1 ? 'var(--color-primary)' : '#e2e8f0', color: step === 1 ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>1</span>
                 <span>Details & CAPTCHA</span>
               </div>
 
-              <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: step === 2 ? '2px solid var(--color-primary)' : '2px solid transparent', color: step === 2 ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontWeight: step === 2 ? 700 : 500, fontSize: '0.825rem' }}>
-                <span style={{ width: 22, height: 22, borderRadius: '50%', background: step === 2 ? 'var(--color-primary)' : '#e2e8f0', color: step === 2 ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</span>
-                <span>Phone & Email OTP Verification</span>
+              <div style={{ padding: '10px clamp(8px, 2vw, 16px)', display: 'flex', alignItems: 'center', gap: 8, borderBottom: step === 2 ? '2px solid var(--color-primary)' : '2px solid transparent', color: step === 2 ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontWeight: step === 2 ? 700 : 500, fontSize: 'clamp(0.725rem, 2.5vw, 0.825rem)' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: step === 2 ? 'var(--color-primary)' : '#e2e8f0', color: step === 2 ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>2</span>
+                <span>Dual OTP Verification</span>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit(step === 1 ? handleSendOTP : onFinalSubmit)} noValidate style={{ padding: '28px' }}>
-              
+            <form onSubmit={handleSubmit(step === 1 ? handleSendOTP : onFinalSubmit)} noValidate style={{ padding: 'clamp(16px, 4vw, 28px)' }}>
+
               {/* STEP 1: PERSONAL DETAILS + CAPTCHA */}
               {step === 1 && (
                 <div>
@@ -406,7 +414,7 @@ export default function RegisterPage() {
                     <input id="fullName" type="text" className={`form-input${errors.fullName ? ' error' : ''}`} placeholder="e.g. Rajesh Narayan Patil" {...register('fullName')} />
                   </Field>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                  <div className="grid-responsive-form">
                     <Field id="mobile" label="10-Digit Indian Mobile Number" error={errors.mobile?.message} required>
                       <div style={{ display: 'flex' }}>
                         <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#F1F5F9', border: '1px solid var(--color-border)', borderRight: 'none', borderRadius: '6px 0 0 6px', fontSize: '0.8125rem', fontWeight: 650, color: '#334155' }}>
@@ -436,7 +444,7 @@ export default function RegisterPage() {
                     2. Security & Password
                   </h2>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                  <div className="grid-responsive-form">
                     <Field id="password" label="Account Password" error={errors.password?.message} required>
                       <div style={{ position: 'relative' }}>
                         <input id="password" type={showPwd ? 'text' : 'password'} className={`form-input${errors.password ? ' error' : ''}`} placeholder="Min. 8 characters" style={{ paddingRight: 40 }} {...register('password')} />
@@ -545,8 +553,8 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Verification Status Overview Banner */}
-                  <div style={{ background: phoneVerified && emailVerified ? '#ecfdf5' : '#f8fafc', border: `1px solid ${phoneVerified && emailVerified ? '#10b981' : 'var(--color-border)'}`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ background: phoneVerified && emailVerified ? '#ecfdf5' : '#f8fafc', border: `1px solid ${phoneVerified && emailVerified ? '#10b981' : 'var(--color-border)'}`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: '0.8125rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                       <span style={{ fontWeight: 600, color: '#334155' }}>Status:</span>
                       <span style={{ padding: '2px 8px', borderRadius: 4, fontWeight: 700, fontSize: '0.75rem', background: phoneVerified ? '#dcfce7' : '#fef3c7', color: phoneVerified ? '#15803d' : '#b45309', border: `1px solid ${phoneVerified ? '#86efac' : '#fde68a'}` }}>
                         Phone: {phoneVerified ? '✓ Verified' : '⏳ Not verified'}

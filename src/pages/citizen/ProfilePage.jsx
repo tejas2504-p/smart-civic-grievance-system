@@ -36,7 +36,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 20 }}>
+      <div className="grid-responsive-profile">
         {/* Profile card */}
         <div>
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '28px 20px', textAlign: 'center', marginBottom: 16 }}>
@@ -45,7 +45,9 @@ export default function ProfilePage() {
             </div>
             <h2 style={{ fontWeight: 700, fontSize: '1.0625rem', marginBottom: 4 }}>{user?.name}</h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 8 }}>{user?.email}</p>
-            <span className="badge status-resolved" style={{ textTransform: 'capitalize' }}>{role}</span>
+            <span className="badge status-resolved" style={{ textTransform: 'capitalize' }}>
+              {typeof role === 'string' ? role : (role?.role || 'citizen')}
+            </span>
           </div>
 
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px' }}>
@@ -69,11 +71,11 @@ export default function ProfilePage() {
 
         {/* Info form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
             <h3 style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: 16, paddingBottom: 10, borderBottom: '1px solid var(--color-border)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Personal Information
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
+            <div className="grid-responsive-form">
               {[
                 { label: 'Full Name', id: 'pf-name', type: 'text', value: user?.name, icon: User },
                 { label: 'Mobile Number', id: 'pf-mobile', type: 'tel', value: user?.phone || user?.mobile, icon: Phone },
