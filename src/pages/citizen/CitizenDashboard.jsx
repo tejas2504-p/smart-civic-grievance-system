@@ -1,9 +1,14 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
 import { StatusBadge, PriorityBadge, EmptyState } from '../../components/ui/SharedComponents';
 import { formatDate } from '../../lib/utils';
+import { aiClient } from '../../services/ai/aiClient';
+import AIStatusExplainer from '../../components/ai/AIStatusExplainer';
+import AIServiceSearch from '../../components/ai/AIServiceSearch';
+import AIGuidedJourney from '../../components/ai/AIGuidedJourney';
 import {
   FileText,
   Clock,
@@ -15,14 +20,53 @@ import {
   Search,
   MapPin,
   Headphones,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles,
+  Lightbulb,
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 
 export default function CitizenDashboard() {
+  const { i18n } = useTranslation();
   const { user } = useAuth();
   const { complaints, notifications } = useData();
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED'
   const [searchQuery, setSearchQuery] = useState('');
+  const [aiSummary, setAiSummary] = useState(null);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [journeyOpen, setJourneyOpen] = useState(false);
+
+  // Fetch AI Citizen Intelligence Summary and Recommendations
+  useEffect(() => {
+    let active = true;
+    async function fetchAiInsights() {
+      setAiLoading(true);
+      try {
+        const lang = i18n.language || 'en';
+        const [sumRes, recRes] = await Promise.allSettled([
+          aiClient.getDashboardSummary(lang),
+          aiClient.getRecommendations(lang)
+        ]);
+        if (active) {
+          if (sumRes.status === 'fulfilled' && sumRes.value?.success) {
+            setAiSummary(sumRes.value);
+          }
+          if (recRes.status === 'fulfilled' && recRes.value?.success) {
+            setAiRecommendations(recRes.value.recommendations || []);
+          }
+        }
+      } catch (err) {
+        console.warn('AI insights fetch error:', err);
+      } finally {
+        if (active) setAiLoading(false);
+      }
+    }
+    fetchAiInsights();
+    return () => { active = false; };
+  }, [i18n.language, complaints.length]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -120,6 +164,75 @@ export default function CitizenDashboard() {
           <PlusCircle size={18} />
           <span>Lodge New Grievance</span>
         </Link>
+      </div>
+
+      {/* AI Citizen Intelligence Card */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+          border: '1px solid #BFDBFE',
+          borderRadius: 14,
+          padding: '18px 22px',
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.06)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ padding: '6px', borderRadius: 8, background: '#4F46E5', color: '#fff', display: 'flex' }}>
+              <Sparkles size={16} />
+            </div>
+            <span style={{ fontSize: '0.875rem', fontWeight: 750, color: '#1E293B', letterSpacing: '-0.01em' }}>
+              AI Citizen Redressal Assistant & Insights
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: 20, border: '1px solid #C7D2FE' }}>
+              Maharashtra RTS Grounded
+            </span>
+          </div>
+
+          <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+            Updated in real-time
+          </span>
+        </div>
+
+        <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, margin: '0 0 12px' }}>
+          {aiSummary?.summary || (
+            total === 0
+              ? 'You have not submitted any complaints yet. Need help getting a certificate or reporting a civic issue like potholes or water leaks? Use our AI search or quick filing below.'
+              : `You have ${total} total recorded grievances (${inProgress} in progress, ${pending} under review). Your issues are being processed under Maharashtra Right to Services SLAs.`
+          )}
+        </p>
+
+        {/* AI Recommendations Chips */}
+        {aiRecommendations.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, paddingTop: 10, borderTop: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 650, color: '#475569', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Lightbulb size={13} color="#F59E0B" /> Suggested for you:
+            </span>
+            {aiRecommendations.map((rec, i) => (
+              <Link
+                key={i}
+                to={rec.link || '/complaints/new'}
+                style={{
+                  textDecoration: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#2563EB',
+                  background: '#FFFFFF',
+                  border: '1px solid #BFDBFE',
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                }}
+              >
+                <span>{rec.title}</span>
+                <ArrowRight size={11} />
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Unread Notifications Alert (Minimal & Clean) */}
@@ -380,7 +493,85 @@ export default function CitizenDashboard() {
           </div>
           <ChevronRight size={16} color="var(--color-text-secondary)" />
         </Link>
+
+        <a
+          href="#service-discovery-section"
+          style={{
+            background: '#ffffff',
+            border: '1px solid #C7D2FE',
+            borderRadius: 10,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            textDecoration: 'none',
+            color: 'var(--color-text-primary)',
+            transition: 'all 0.15s ease',
+            boxShadow: '0 2px 6px rgba(79, 70, 229, 0.05)'
+          }}
+        >
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#EEF2FF', color: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Sparkles size={18} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 750, color: '#4F46E5' }}>AI Service Help</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Find service in plain words</div>
+          </div>
+          <ChevronRight size={16} color="#4F46E5" />
+        </a>
       </div>
+
+      {/* "What do you need help with?" - Dedicated AI Service Discovery Section */}
+      <section
+        id="service-discovery-section"
+        aria-label="What do you need help with"
+        style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1px solid #CBD5E1',
+          padding: 'clamp(20px, 3.5vw, 28px)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+        }}
+      >
+        <AIServiceSearch
+          style={{ margin: 0, padding: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}
+          headerAction={
+            <button
+              type="button"
+              onClick={() => setJourneyOpen(true)}
+              className="btn btn-outline btn-sm"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 16px',
+                borderRadius: 8,
+                fontSize: '0.825rem',
+                fontWeight: 700,
+                borderColor: '#4F46E5',
+                color: '#4F46E5',
+                background: '#FFFFFF',
+                boxShadow: '0 2px 6px rgba(79, 70, 229, 0.08)'
+              }}
+            >
+              <Compass size={15} />
+              <span>7-Step Citizen Filing Guide</span>
+            </button>
+          }
+          onSelectService={(service) => {
+            navigate('/complaints/new', {
+              state: {
+                title: service.name || service.serviceName,
+                category: service.category,
+                department: service.department
+              }
+            });
+          }}
+        />
+      </section>
+
+      {/* Citizen Roadmap: 7 Easy Steps Dialog */}
+      <AIGuidedJourney isOpen={journeyOpen} onClose={() => setJourneyOpen(false)} />
 
       {/* Main Complaints List (Clean, minimal, easy to scan) */}
       <div style={{ background: '#ffffff', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
@@ -536,19 +727,22 @@ export default function CitizenDashboard() {
                       <StatusBadge status={c.status} />
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <Link
-                        to={`/complaints/${c.id}`}
-                        className="btn btn-outline btn-sm"
-                        style={{
-                          fontSize: '0.775rem',
-                          padding: '4px 10px',
-                          fontWeight: 600,
-                          color: 'var(--color-secondary)',
-                          borderColor: 'var(--color-border)'
-                        }}
-                      >
-                        Details →
-                      </Link>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <AIStatusExplainer status={c.status} complaintId={c.id} />
+                        <Link
+                          to={`/complaints/${c.id}`}
+                          className="btn btn-outline btn-sm"
+                          style={{
+                            fontSize: '0.775rem',
+                            padding: '4px 10px',
+                            fontWeight: 600,
+                            color: 'var(--color-secondary)',
+                            borderColor: 'var(--color-border)'
+                          }}
+                        >
+                          Details →
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

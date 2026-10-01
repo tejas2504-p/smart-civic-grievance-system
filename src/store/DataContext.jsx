@@ -315,6 +315,17 @@ export function DataProvider({ children }) {
     throw new Error(res.message || 'Could not update status');
   }, []);
 
+  // Action: Assign officer to complaint (Admin only)
+  const assignOfficer = useCallback(async (id, officerData) => {
+    const res = await api.assignOfficer(id, officerData);
+    if (res.success && res.data) {
+      setComplaints(prev => prev.map(c => (c.id === id || c._id === id ? res.data : c)));
+      toast.success(`Officer ${officerData.officerName} assigned successfully.`);
+      return res.data;
+    }
+    throw new Error(res.message || 'Could not assign officer');
+  }, []);
+
   // Action: Mark notification as read
   const markNotificationAsRead = useCallback(async (notifId) => {
     try {
@@ -349,6 +360,7 @@ export function DataProvider({ children }) {
         addComplaint,
         deleteComplaint,
         updateStatus,
+        assignOfficer,
         markNotificationAsRead,
         markAllNotificationsAsRead,
       }}

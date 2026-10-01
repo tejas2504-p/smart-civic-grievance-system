@@ -5,6 +5,7 @@ import { StatusBadge, PriorityBadge, Breadcrumb, Modal, ConfirmModal, Alert } fr
 import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import { CheckCircle, Send, AlertTriangle, ArrowUpCircle, PlusCircle, Sparkles, User, Phone, Mail, MapPin } from 'lucide-react';
+import GrievanceProgressTracker from '../../components/ui/GrievanceProgressTracker';
 
 export default function OfficerComplaintDetail() {
   const { id } = useParams();
@@ -144,6 +145,9 @@ export default function OfficerComplaintDetail() {
           </div>
         </div>
       </div>
+
+      {/* Real-time Order & Resolution Progress Pipeline */}
+      <GrievanceProgressTracker complaint={complaint} />
 
       <div className="grid-responsive-sidebar">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

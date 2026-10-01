@@ -6,15 +6,22 @@ import {
   FilePlus2, PlusCircle, Search, FileStack, FileText, MapPinned, HelpCircle,
   Headphones, CheckCircle, Clock, Users, Building2,
   ChevronRight, Shield, ArrowRight, ArrowUpRight, Sparkles,
-  Phone, Mail, Lock, Zap
+  Phone, Mail, Lock, Zap, Compass
 } from 'lucide-react';
-
 
 import { publicStats } from '../../data/mockData';
 import HeroSlider from '../../components/ui/HeroSlider';
+import AIServiceSearch from '../../components/ai/AIServiceSearch';
+import AIGuidedJourney from '../../components/ai/AIGuidedJourney';
 
 // Public footer
-function PublicFooter() {
+function PublicFooter({ user, role }) {
+  const getDashboardPath = () => {
+    if (role === 'admin') return '/admin';
+    if (role === 'officer') return '/officer';
+    return '/dashboard';
+  };
+
   return (
     <footer style={{ background: '#09223e', color: 'rgba(255,255,255,0.8)', padding: 'clamp(32px, 5vw, 48px) clamp(16px, 3vw, 24px) 0' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 32, paddingBottom: 36 }}>
@@ -36,13 +43,22 @@ function PublicFooter() {
         </div>
         <div>
           <h3 style={{ color: '#fff', fontWeight: 650, fontSize: '0.875rem', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Links</h3>
-          {['Register Complaint', 'Track Complaint', 'My Dashboard', 'FAQ', 'Help & Support', 'Privacy Policy'].map(link => (
-            <div key={link} style={{ marginBottom: 9 }}>
-              <Link to={link === 'Register Complaint' ? '/complaints/new' : link === 'Track Complaint' ? '/track' : link === 'FAQ' ? '/faq' : link === 'Help & Support' ? '/help' : '/login'} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', fontSize: '0.8125rem' }}>
-                {link}
-              </Link>
-            </div>
-          ))}
+          {['Register Complaint', 'Track Complaint', 'My Dashboard', 'FAQ', 'Help & Support', 'Issues Map'].map(link => {
+            let to = '/';
+            if (link === 'Register Complaint') to = user ? '/complaints/new' : '/login';
+            else if (link === 'Track Complaint') to = '/track';
+            else if (link === 'My Dashboard') to = user ? getDashboardPath() : '/login';
+            else if (link === 'FAQ') to = '/faq';
+            else if (link === 'Help & Support') to = '/help';
+            else if (link === 'Issues Map') to = '/admin/map';
+            return (
+              <div key={link} style={{ marginBottom: 9 }}>
+                <Link to={to} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', fontSize: '0.8125rem' }}>
+                  {link}
+                </Link>
+              </div>
+            );
+          })}
         </div>
         <div>
           <h3 style={{ color: '#fff', fontWeight: 650, fontSize: '0.875rem', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Departments</h3>
@@ -82,8 +98,9 @@ function PublicFooter() {
 export default function LandingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, role, logout } = useAuth();
   const [trackId, setTrackId] = useState('');
+  const [journeyOpen, setJourneyOpen] = useState(false);
 
   const handleTrack = (e) => {
     e.preventDefault();
@@ -194,39 +211,122 @@ export default function LandingPage() {
               <HeroSlider />
             </div>
 
-            {/* Quick login panel */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: 'clamp(20px, 3vw, 28px) clamp(18px, 3vw, 24px)', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 750, color: 'var(--color-text-primary)', marginBottom: 4 }}>
-                  Access Your Account
-                </h2>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 18 }}>
-                  Login to submit, track or manage complaints
-                </p>
-                
-                <Link to="/login" className="btn btn-primary" style={{ width: '100%', marginBottom: 10, justifyContent: 'center', padding: '11px 16px', fontSize: '0.925rem', fontWeight: 700 }}>
-                  <Users size={16} /> Sign In to Portal
-                </Link>
+            {/* Account Panel: Logged-in vs Guest */}
+            {user ? (
+              <div style={{ background: '#fff', borderRadius: 14, padding: 'clamp(20px, 3vw, 28px) clamp(18px, 3vw, 24px)', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 750, flexShrink: 0 }}>
+                      {typeof user?.name === 'string' ? (user.name[0] || 'U') : 'U'}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <h2 style={{ fontSize: '1.05rem', fontWeight: 750, color: 'var(--color-text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Welcome Back, {typeof user?.name === 'string' ? user.name.split(' ')[0] : 'User'}!
+                      </h2>
+                      <span className="badge status-submitted" style={{ marginTop: 4, textTransform: 'capitalize', fontSize: '0.7rem' }}>
+                        {role === 'admin' ? 'Administrator' : role === 'officer' ? 'Department Officer' : 'Verified Citizen'}
+                      </span>
+                    </div>
+                  </div>
 
-                <Link to="/register" className="btn btn-outline" style={{ width: '100%', marginBottom: 16, justifyContent: 'center', padding: '10px 16px', fontSize: '0.875rem', fontWeight: 650 }}>
-                  Register New Account
-                </Link>
-              </div>
-
-              <div>
-                <div style={{ padding: '10px 12px', background: 'var(--color-bg)', borderRadius: 8, border: '1px solid var(--color-border)', marginBottom: 14 }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'flex', gap: 6, alignItems: 'flex-start', lineHeight: 1.4 }}>
-                    <Shield size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--color-success)' }} />
-                    Official Government of Maharashtra Redressal Gateway.
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 18, lineHeight: 1.45 }}>
+                    You are signed in to the Maharashtra Grievance Portal. Manage your submissions or track real-time SLA resolutions below.
                   </p>
+
+                  <Link
+                    to={role === 'admin' ? '/admin' : role === 'officer' ? '/officer' : '/dashboard'}
+                    className="btn btn-primary"
+                    style={{ width: '100%', marginBottom: 10, justifyContent: 'center', padding: '11px 16px', fontSize: '0.925rem', fontWeight: 700 }}
+                  >
+                    <Users size={16} /> Go to Dashboard
+                  </Link>
+
+                  {role === 'citizen' && (
+                    <Link
+                      to="/complaints/new"
+                      className="btn btn-outline"
+                      style={{ width: '100%', marginBottom: 16, justifyContent: 'center', padding: '10px 16px', fontSize: '0.875rem', fontWeight: 650 }}
+                    >
+                      <FilePlus2 size={16} /> Register New Complaint
+                    </Link>
+                  )}
+
+                  {role === 'officer' && (
+                    <Link
+                      to="/officer/complaints"
+                      className="btn btn-outline"
+                      style={{ width: '100%', marginBottom: 16, justifyContent: 'center', padding: '10px 16px', fontSize: '0.875rem', fontWeight: 650 }}
+                    >
+                      <FileText size={16} /> View Assigned Complaints
+                    </Link>
+                  )}
+
+                  {role === 'admin' && (
+                    <Link
+                      to="/admin/analytics"
+                      className="btn btn-outline"
+                      style={{ width: '100%', marginBottom: 16, justifyContent: 'center', padding: '10px 16px', fontSize: '0.875rem', fontWeight: 650 }}
+                    >
+                      <Building2 size={16} /> Government Analytics
+                    </Link>
+                  )}
                 </div>
 
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>New citizen? </span>
-                  <Link to="/register" style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', fontWeight: 700, textDecoration: 'none' }}>Create Account</Link>
+                <div>
+                  <div style={{ padding: '10px 12px', background: 'var(--color-bg)', borderRadius: 8, border: '1px solid var(--color-border)', marginBottom: 14 }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'flex', gap: 6, alignItems: 'center', lineHeight: 1.4, margin: 0 }}>
+                      <Shield size={14} style={{ flexShrink: 0, color: 'var(--color-success)' }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Session: {user?.email || user?.mobile || 'Active'}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => logout()}
+                      style={{ background: 'none', border: 'none', fontSize: '0.8125rem', color: 'var(--color-danger)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ background: '#fff', borderRadius: 14, padding: 'clamp(20px, 3vw, 28px) clamp(18px, 3vw, 24px)', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 750, color: 'var(--color-text-primary)', marginBottom: 4 }}>
+                    Access Your Account
+                  </h2>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 18 }}>
+                    Login to submit, track or manage complaints
+                  </p>
+                  
+                  <Link to="/login" className="btn btn-primary" style={{ width: '100%', marginBottom: 10, justifyContent: 'center', padding: '11px 16px', fontSize: '0.925rem', fontWeight: 700 }}>
+                    <Users size={16} /> Sign In to Portal
+                  </Link>
+
+                  <Link to="/register" className="btn btn-outline" style={{ width: '100%', marginBottom: 16, justifyContent: 'center', padding: '10px 16px', fontSize: '0.875rem', fontWeight: 650 }}>
+                    Register New Account
+                  </Link>
+                </div>
+
+                <div>
+                  <div style={{ padding: '10px 12px', background: 'var(--color-bg)', borderRadius: 8, border: '1px solid var(--color-border)', marginBottom: 14 }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'flex', gap: 6, alignItems: 'flex-start', lineHeight: 1.4 }}>
+                      <Shield size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--color-success)' }} />
+                      Official Government of Maharashtra Redressal Gateway.
+                    </p>
+                  </div>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>New citizen? </span>
+                    <Link to="/register" style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', fontWeight: 700, textDecoration: 'none' }}>Create Account</Link>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Row 2: Secondary Quick Track & Info Bar */}
@@ -292,6 +392,46 @@ export default function LandingPage() {
       </section>
 
       <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(28px, 4vw, 48px) clamp(16px, 3vw, 24px)' }}>
+        {/* AI Natural Language Service Discovery Section */}
+        <section aria-label="AI Service Discovery" style={{ marginBottom: 48 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            <div>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4f46e5', background: 'rgba(79, 70, 229, 0.1)', padding: '4px 10px', borderRadius: 20 }}>
+                <Sparkles size={13} />
+                <span>AI Citizen Intelligence Layer</span>
+              </span>
+              <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: 6 }}>
+                What service or help do you need today?
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setJourneyOpen(true)}
+              className="btn btn-outline"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 16px',
+                borderRadius: 10,
+                fontSize: '0.85rem',
+                fontWeight: 650,
+                borderColor: '#4f46e5',
+                color: '#4f46e5'
+              }}
+            >
+              <Compass size={16} />
+              <span>7-Step Citizen Filing Guide</span>
+            </button>
+          </div>
+
+          {/* Embedded Semantic Search Box */}
+          <AIServiceSearch onSelectService={(service) => navigate('/complaints/new')} />
+        </section>
+
+        <AIGuidedJourney isOpen={journeyOpen} onClose={() => setJourneyOpen(false)} />
+
         {/* Quick Services — Modern 3D Cards */}
         <section aria-labelledby="services-title" style={{ marginBottom: 60 }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -399,7 +539,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <PublicFooter />
+      <PublicFooter user={user} role={role} />
     </div>
   );
 }

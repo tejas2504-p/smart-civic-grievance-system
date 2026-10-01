@@ -9,6 +9,10 @@ import { Breadcrumb, Alert } from '../../components/ui/SharedComponents';
 import { MapPin, Upload, CheckCircle, ArrowLeft, ArrowRight, X, Sparkles, AlertCircle } from 'lucide-react';
 import { useData } from '../../store/DataContext';
 import { useAuth } from '../../store/AuthContext';
+import { AIFormFieldHelp, AIFormConsistencyBanner } from '../../components/ai/AIFormFieldHelp';
+import AIDocumentAssistant from '../../components/ai/AIDocumentAssistant';
+import OpenStreetMapPicker from '../../components/maps/OpenStreetMapPicker';
+import MapSection from '../../components/maps/MapSection';
 
 const STEPS = [
   { id: 1, label: 'Complaint Details' },
@@ -171,6 +175,12 @@ export default function NewComplaintPage() {
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 20 }}>
                 Attach photos, videos, or documents to support your complaint. (Optional but recommended)
               </p>
+
+              {/* AI Document Checklist Assistant */}
+              <div style={{ marginBottom: 20 }}>
+                <AIDocumentAssistant serviceId={formData.category === 'Revenue & Land' ? 'domicile_certificate' : 'pothole_road_damage'} />
+              </div>
+
               <div
                 onClick={() => document.getElementById('file-upload').click()}
                 style={{ border: '2px dashed var(--color-border)', borderRadius: 8, padding: '40px 24px', textAlign: 'center', cursor: 'pointer', background: 'var(--color-bg)' }}
@@ -239,9 +249,26 @@ export default function NewComplaintPage() {
                   <dd style={{ color: 'var(--color-text-primary)', lineHeight: 1.6 }}>{formData.description || '—'}</dd>
                   <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Location</dt>
                   <dd style={{ color: 'var(--color-text-primary)' }}>{[formData.address, formData.city, formData.pincode].filter(Boolean).join(', ') || '—'}</dd>
+                  {formData.coords && (
+                    <>
+                      <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Coordinates (OSM)</dt>
+                      <dd style={{ color: 'var(--color-text-primary)', fontFamily: 'monospace', fontSize: '0.8125rem' }}>
+                        📍 {formData.coords.lat}, {formData.coords.lng}
+                      </dd>
+                    </>
+                  )}
                   <dt style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Attachments</dt>
                   <dd style={{ color: 'var(--color-text-primary)' }}>{files.length > 0 ? `${files.length} file(s) attached` : 'None'}</dd>
                 </dl>
+
+                {formData.coords && (
+                  <div style={{ marginTop: 14, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                    <div style={{ padding: '6px 12px', background: '#f8fafc', borderBottom: '1px solid var(--color-border)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <MapPin size={13} color="var(--color-primary)" /> OpenStreetMap Selected Location Preview
+                    </div>
+                    <MapSection lat={formData.coords.lat} lng={formData.coords.lng} title={formData.title || 'Complaint Location'} height={160} />
+                  </div>
+                )}
               </div>
 
               {/* AI panel in review */}
@@ -255,6 +282,9 @@ export default function NewComplaintPage() {
                   </p>
                 </div>
               </Alert>
+
+              {/* Non-intrusive AI Form Consistency & Quality Check */}
+              <AIFormConsistencyBanner formData={formData} />
 
               <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
                 <button className="btn btn-ghost" onClick={() => setStep(3)}>
@@ -293,18 +323,27 @@ function Step1Form({ onNext, initial }) {
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
       <div style={{ marginBottom: 16 }}>
-        <label className="form-label" htmlFor="title">Complaint Title <span className="required" aria-hidden="true">*</span></label>
+        <label className="form-label" htmlFor="title">
+          Complaint Title <span className="required" aria-hidden="true">*</span>
+          <AIFormFieldHelp fieldKey="title" />
+        </label>
         <input id="title" type="text" className={`form-input${errors.title ? ' error' : ''}`} placeholder="Brief description of your problem (e.g. Large pothole on MG Road)" {...register('title')} />
         {errors.title && <p className="form-error" role="alert">{errors.title.message}</p>}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <label className="form-label" htmlFor="description">Describe Your Problem <span className="required" aria-hidden="true">*</span></label>
+        <label className="form-label" htmlFor="description">
+          Describe Your Problem <span className="required" aria-hidden="true">*</span>
+          <AIFormFieldHelp fieldKey="description" />
+        </label>
         <textarea id="description" rows={4} className={`form-input${errors.description ? ' error' : ''}`} placeholder="Provide detailed information about the issue — what is the problem, how long has it been happening, what impact is it having..." style={{ resize: 'vertical' }} {...register('description')} />
         {errors.description && <p className="form-error" role="alert">{errors.description.message}</p>}
       </div>
       <div className="grid-responsive-form">
         <div style={{ marginBottom: 16 }}>
-          <label className="form-label" htmlFor="category">Category <span className="required" aria-hidden="true">*</span></label>
+          <label className="form-label" htmlFor="category">
+            Category <span className="required" aria-hidden="true">*</span>
+            <AIFormFieldHelp fieldKey="category" />
+          </label>
           <select id="category" className={`form-input${errors.category ? ' error' : ''}`} {...register('category')}>
             <option value="">Select category</option>
             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -331,62 +370,108 @@ function Step1Form({ onNext, initial }) {
   );
 }
 
-// Step 2 sub-form
+// Step 2 sub-form with OpenStreetMap
 function Step2Form({ onNext, onBack, initial }) {
   const schema = z.object({
     address: z.string().min(5, 'Address is required'),
     city: z.string().min(2, 'City is required'),
     pincode: z.string().regex(/^\d{6}$/, 'Enter valid 6-digit PIN code'),
   });
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
-  const [locating, setLocating] = useState(false);
-  const [coords, setCoords] = useState(null);
 
-  const getLocation = () => {
-    setLocating(true);
-    navigator.geolocation?.getCurrentPosition(
-      pos => { setCoords({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }); setLocating(false); toast.success('Location detected.'); },
-      () => { setLocating(false); toast.error('Could not detect location. Please enter manually.'); }
-    );
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      address: initial?.address || '',
+      city: initial?.city || 'Pune',
+      pincode: initial?.pincode || '411001',
+    },
+  });
+
+  const [coords, setCoords] = useState(
+    initial?.coords || { lat: 18.5204, lng: 73.8567 }
+  );
+
+  // Auto-fill form inputs when marker is moved or map is clicked
+  const handleOSMAutoFill = ({ address, city, pincode }) => {
+    if (address) {
+      setValue('address', address, { shouldValidate: true });
+    }
+    if (city) {
+      setValue('city', city, { shouldValidate: true });
+    }
+    if (pincode && /^\d{6}$/.test(pincode)) {
+      setValue('pincode', pincode, { shouldValidate: true });
+    }
+  };
+
+  const handleCoordsChange = (newCoords) => {
+    setCoords(newCoords);
   };
 
   return (
     <form onSubmit={handleSubmit(d => onNext({ ...d, coords }))} noValidate style={{ marginTop: 16 }}>
+      {/* Live OpenStreetMap Selection */}
+      <OpenStreetMapPicker
+        value={coords}
+        onChange={handleCoordsChange}
+        onAutoFill={handleOSMAutoFill}
+        height={300}
+      />
+
       <div style={{ marginBottom: 16 }}>
-        <label className="form-label" htmlFor="loc-address">Address <span className="required" aria-hidden="true">*</span></label>
-        <input id="loc-address" type="text" className={`form-input${errors.address ? ' error' : ''}`} placeholder="Street address, landmark" {...register('address')} />
+        <label className="form-label" htmlFor="loc-address">
+          Street Address / Landmark <span className="required" aria-hidden="true">*</span>
+          <AIFormFieldHelp fieldKey="address" />
+        </label>
+        <input
+          id="loc-address"
+          type="text"
+          className={`form-input${errors.address ? ' error' : ''}`}
+          placeholder="e.g. Near Shivaji Chowk, FC Road, Shivaji Nagar"
+          {...register('address')}
+        />
         {errors.address && <p className="form-error" role="alert">{errors.address.message}</p>}
       </div>
+
       <div className="grid-responsive-form">
         <div style={{ marginBottom: 16 }}>
-          <label className="form-label" htmlFor="loc-city">City <span className="required" aria-hidden="true">*</span></label>
-          <input id="loc-city" type="text" className={`form-input${errors.city ? ' error' : ''}`} placeholder="Pune" {...register('city')} />
+          <label className="form-label" htmlFor="loc-city">
+            City / District <span className="required" aria-hidden="true">*</span>
+            <AIFormFieldHelp fieldKey="district" />
+          </label>
+          <input
+            id="loc-city"
+            type="text"
+            className={`form-input${errors.city ? ' error' : ''}`}
+            placeholder="Pune"
+            {...register('city')}
+          />
           {errors.city && <p className="form-error" role="alert">{errors.city.message}</p>}
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label className="form-label" htmlFor="loc-pin">PIN Code <span className="required" aria-hidden="true">*</span></label>
-          <input id="loc-pin" type="text" className={`form-input${errors.pincode ? ' error' : ''}`} placeholder="411001" maxLength={6} {...register('pincode')} />
+          <label className="form-label" htmlFor="loc-pin">
+            PIN Code <span className="required" aria-hidden="true">*</span>
+            <AIFormFieldHelp fieldKey="pincode" />
+          </label>
+          <input
+            id="loc-pin"
+            type="text"
+            className={`form-input${errors.pincode ? ' error' : ''}`}
+            placeholder="411001"
+            maxLength={6}
+            {...register('pincode')}
+          />
           {errors.pincode && <p className="form-error" role="alert">{errors.pincode.message}</p>}
         </div>
       </div>
-      <button type="button" className="btn btn-outline btn-sm" onClick={getLocation} disabled={locating} style={{ marginBottom: 16 }}>
-        <MapPin size={14} /> {locating ? 'Detecting…' : 'Use My Current Location'}
-      </button>
-      {coords && (
-        <p style={{ fontSize: '0.8125rem', color: 'var(--color-success)', marginBottom: 12 }}>
-          ✓ Location detected: {coords.lat}, {coords.lng}
-        </p>
-      )}
-      <div style={{ height: 200, background: '#e8f4fd', border: '1px solid var(--color-border)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-        <div style={{ textAlign: 'center', color: 'var(--color-secondary)' }}>
-          <MapPin size={32} style={{ marginBottom: 8 }} />
-          <p style={{ fontSize: '0.875rem', fontWeight: 500 }}>Map — Select Location</p>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>Map loads when complaint detail page is opened</p>
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button type="button" className="btn btn-ghost" onClick={onBack}><ArrowLeft size={15} /> Back</button>
-        <button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto' }}>Next <ArrowRight size={15} /></button>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+        <button type="button" className="btn btn-ghost" onClick={onBack}>
+          <ArrowLeft size={15} /> Back
+        </button>
+        <button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto' }}>
+          Next <ArrowRight size={15} />
+        </button>
       </div>
     </form>
   );

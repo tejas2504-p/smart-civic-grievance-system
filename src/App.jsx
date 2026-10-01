@@ -63,15 +63,36 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
+// Guest route wrapper: if user is already logged in, redirect them directly to their role dashboard
+function GuestRoute({ children }) {
+  const { user, role, loading } = useAuth();
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{ margin: '0 auto 16px', width: 36, height: 36, border: '3px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
+  if (user) {
+    if (role === 'admin') return <Navigate to="/admin" replace />;
+    if (role === 'officer') return <Navigate to="/officer" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes — no auth required */}
+      {/* Public routes */}
       <Route element={<AppShell />}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+        <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
         <Route path="/track" element={<TrackComplaintPage />} />
         <Route path="/transparency" element={<TransparencyDashboard />} />
         <Route path="/faq" element={<FAQPage />} />
@@ -111,6 +132,7 @@ function AppRoutes() {
 }
 
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { ThemeProvider } from './store/ThemeContext';
 
 export default function App() {
   React.useEffect(() => {
@@ -122,11 +144,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <AuthProvider>
-          <DataProvider>
-            <AppRoutes />
-          </DataProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <DataProvider>
+              <AppRoutes />
+            </DataProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

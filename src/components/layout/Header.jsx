@@ -3,15 +3,17 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
+import { useTheme } from '../../store/ThemeContext';
 import {
   Bell, Search, ChevronDown, Globe,
-  LogOut, User, Menu, X, Settings, Headphones
+  LogOut, User, Menu, X, Settings, Headphones,
+  Moon, Sun
 } from 'lucide-react';
 import AdMarquee from './AdMarquee';
 import ScreenReaderModal from './ScreenReaderModal';
 
-
 export default function Header({ onMenuToggle, sidebarOpen }) {
+  const { isDark, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const { user, role, logout } = useAuth();
   const { notifications = [] } = useData();
@@ -66,7 +68,6 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
     { to: '/track', label: 'Track Complaint' },
     { to: '/faq', label: 'FAQ' },
     { to: '/help', label: 'Help & Support' },
-    { to: '/admin/map', label: 'Issues Map' },
   ];
 
   const isActive = (path) => {
@@ -201,6 +202,30 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             </button>
           </div>
 
+          {/* Dark / Light Mode Toggle */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              background: isDark ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255,255,255,0.12)',
+              border: isDark ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 4,
+              padding: '2px 8px',
+              color: isDark ? '#FDE047' : '#fff',
+              fontSize: '0.725rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              transition: 'all 0.15s ease',
+            }}
+            aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDark ? <Sun size={12} color="#FDE047" /> : <Moon size={12} color="#93C5FD" />}
+            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+
           {/* Language Selector */}
           <div style={{ position: 'relative' }}>
             <button
@@ -305,7 +330,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
 
         {/* Logo & Portal Branding */}
         <Link
-          to="/"
+          to={user ? getDashboardPath() : "/"}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -724,23 +749,39 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                   {isActive(link.to) && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)' }} />}
                 </Link>
               ))}
-              <div style={{ borderTop: '1px solid var(--color-border)', margin: '10px 0', paddingTop: 12, display: 'flex', gap: 10 }}>
-                <Link
-                  to="/login"
-                  onClick={() => setShowMobileNav(false)}
+              <div style={{ borderTop: '1px solid var(--color-border)', margin: '10px 0', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Mobile Dark / Light Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleTheme();
+                    setShowMobileNav(false);
+                  }}
                   className="btn btn-outline"
-                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px' }}
+                  style={{ width: '100%', justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px' }}
                 >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setShowMobileNav(false)}
-                  className="btn"
-                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px', background: 'var(--color-accent)', color: '#fff' }}
-                >
-                  Register
-                </Link>
+                  {isDark ? <Sun size={16} color="#FDE047" /> : <Moon size={16} color="#60A5FA" />}
+                  <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+                </button>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <Link
+                    to="/login"
+                    onClick={() => setShowMobileNav(false)}
+                    className="btn btn-outline"
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px' }}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setShowMobileNav(false)}
+                    className="btn"
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.9rem', padding: '10px 14px', background: 'var(--color-accent)', color: '#fff' }}
+                  >
+                    Register
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

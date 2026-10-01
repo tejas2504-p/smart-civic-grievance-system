@@ -5,6 +5,8 @@ import { StatusBadge, PriorityBadge } from '../../components/ui/SharedComponents
 import { formatDate } from '../../lib/utils';
 import { Search, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import AIStatusExplainer from '../../components/ai/AIStatusExplainer';
+import GrievanceProgressTracker from '../../components/ui/GrievanceProgressTracker';
 
 export default function TrackComplaintPage() {
   const [searchParams] = useSearchParams();
@@ -95,12 +97,17 @@ export default function TrackComplaintPage() {
         )}
 
         {result && (
-          <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Visual Order Progress Pipeline */}
+            <GrievanceProgressTracker complaint={result} />
+
+            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ background: 'var(--color-primary)', padding: 'clamp(16px, 3vw, 20px) clamp(16px, 3vw, 24px)' }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>{result.id}</span>
                 <PriorityBadge priority={result.priority} />
                 <StatusBadge status={result.status} />
+                <AIStatusExplainer status={result.status} complaintId={result.id} />
               </div>
               <h2 style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 700, color: '#fff', margin: 0 }}>{result.title}</h2>
             </div>
@@ -141,8 +148,9 @@ export default function TrackComplaintPage() {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
     </div>
   );
 }

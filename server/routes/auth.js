@@ -14,7 +14,17 @@ import {
   isDemoPhoneNumber,
 } from '../services/smsOtpService.js';
 import { sendEmailOTP } from '../services/emailOtpService.js';
-import { sendOtpLimiter, verifyOtpLimiter, resendOtpLimiter, authLimiter } from '../middleware/security.js';
+import {
+  sendOtpLimiter,
+  verifyOtpLimiter,
+  resendOtpLimiter,
+  authLimiter,
+  loginLimiter,
+  registerLimiter,
+  passwordResetLimiter,
+} from '../middleware/security.js';
+import { validateStrongPassword } from '../utils/passwordPolicy.js';
+import { logSecurityEvent } from '../utils/auditLogger.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'grievance_portal_jwt_secret_key_2026', {
@@ -747,9 +757,9 @@ export function createAuthRouter(io) {
   /**
    * @route   POST /api/auth/register
    * @desc    Register a new citizen: Initiates pending registration or finalizes after dual OTP verification
-   * @access  Public (Rate-limited)
+   * @access  Public (Rate-limited, strong password enforced)
    */
-  router.post('/register', authLimiter, async (req, res) => {
+  router.post('/register', registerLimiter, async (req, res) => {
     try {
       const { name, email, password, phone, role, address, verificationId, captchaToken } = req.body;
 
@@ -785,7 +795,8 @@ export function createAuthRouter(io) {
         const finalEmail = session.email;
         const finalPhone = session.phoneNumber;
         const finalAddress = address || session.pendingRegistration?.address || '';
-        const finalRole = role || session.pendingRegistration?.role || 'citizen';
+        // Security constraint: Self-registration strictly allowed for citizen role only
+        const finalRole = 'citizen';
         const finalPassword = session.pendingRegistration?.passwordHash || (password ? await bcrypt.hash(password, 10) : undefined);
 
         if (!finalName || !finalPassword) {
@@ -826,6 +837,15 @@ export function createAuthRouter(io) {
         session.isCompleted = true;
         await session.save();
 
+        await logSecurityEvent({
+          action: 'AUTH_REGISTER_SUCCESS',
+          entity: 'User',
+          entityId: user._id,
+          performedBy: user.email,
+          role: user.role,
+          ipAddress: req.ip,
+        });
+
         emitSocketEvent('otp:verification-complete', {
           type: 'otp:verification-complete',
           verificationId,
@@ -855,10 +875,22 @@ export function createAuthRouter(io) {
         return res.status(400).json({ success: false, message: 'All required registration fields must be provided.' });
       }
 
+      // 1. Authoritative Strong Password Validation
+      const pwdValidation = validateStrongPassword(password);
+      if (!pwdValidation.isValid) {
+        return res.status(400).json({ success: false, message: pwdValidation.message });
+      }
+
+      // 2. Validate Name format (Length & Unicode support for English, Marathi, Hindi)
+      const trimmedName = name.trim();
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return res.status(400).json({ success: false, message: 'Full name must be between 2 and 100 characters.' });
+      }
+
       const formattedPhone = normalizePhoneNumber(phone);
       const normalizedEmail = email.trim().toLowerCase();
 
-      // 1. Validate Indian Mobile
+      // 3. Validate Indian Mobile
       if (!isValidIndianMobile(phone)) {
         return res.status(400).json({
           success: false,
@@ -866,13 +898,13 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 2. Validate Email format
-      const emailRegex = /^[^\s@]+@[^\s@]+$/;
-      if (!emailRegex.test(normalizedEmail)) {
+      // 4. Validate Email format & length
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (normalizedEmail.length > 254 || !emailRegex.test(normalizedEmail)) {
         return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
       }
 
-      // 3. Demo Phone Number Restriction (Backend Security Enforcement)
+      // 5. Demo Phone Number Restriction (Backend Security Enforcement)
       const isDemoMode = process.env.OTP_DEMO_MODE !== 'false';
       if (isDemoMode && !isDemoPhoneNumber(formattedPhone)) {
         return res.status(400).json({
@@ -881,7 +913,7 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 4. Check whether email or phone already belongs to a registered account
+      // 6. Check whether email or phone already belongs to a registered account
       const userExists = await User.findOne({
         $or: [
           { email: normalizedEmail },
@@ -895,7 +927,7 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 5. Server-Side CAPTCHA Verification
+      // 7. Server-Side CAPTCHA Verification
       const captchaResult = await verifyCaptcha(captchaToken, req.ip);
       if (!captchaResult.success) {
         return res.status(400).json({
@@ -904,11 +936,11 @@ export function createAuthRouter(io) {
         });
       }
 
-      // 6. Generate cryptographically secure OTPs
+      // 8. Generate cryptographically secure OTPs
       const phoneOtp = generateSecureOTP();
       const emailOtp = generateSecureOTP();
 
-      // 7. Hash password with bcrypt before saving into pending registration
+      // 9. Hash password with bcrypt before saving into pending registration
       const passwordHash = await bcrypt.hash(password, 10);
 
       // 8. Dispatch SMS OTP & Email OTP concurrently
@@ -1021,10 +1053,10 @@ export function createAuthRouter(io) {
 
   /**
    * @route   POST /api/auth/login
-   * @desc    Authenticate user via password or verified OTP with server-side CAPTCHA
-   * @access  Public (Rate-limited)
+   * @desc    Authenticate user via password or verified OTP with server-side CAPTCHA and brute-force lockout
+   * @access  Public (Rate-limited, brute-force protected)
    */
-  router.post('/login', authLimiter, async (req, res) => {
+  router.post('/login', loginLimiter, async (req, res) => {
     try {
       const { email, password, captchaToken, verificationId } = req.body;
 
@@ -1032,6 +1064,11 @@ export function createAuthRouter(io) {
       if (captchaToken) {
         const captchaResult = await verifyCaptcha(captchaToken, req.ip);
         if (!captchaResult.success) {
+          await logSecurityEvent({
+            action: 'AUTH_CAPTCHA_FAILED',
+            performedBy: email || 'Anonymous',
+            ipAddress: req.ip,
+          });
           return res.status(400).json({
             success: false,
             message: captchaResult.message || 'Human verification failed. Please try again.',
@@ -1083,8 +1120,23 @@ export function createAuthRouter(io) {
           });
         }
 
+        // Reset any lockout state on successful OTP login
+        if (user.handleSuccessfulLogin) {
+          await user.handleSuccessfulLogin();
+        }
+
         // Delete / invalidate session to prevent replay
         await OTPVerification.deleteOne({ _id: session._id });
+
+        await logSecurityEvent({
+          action: 'AUTH_LOGIN_SUCCESS_OTP',
+          entity: 'User',
+          entityId: user._id,
+          performedBy: user.email,
+          role: user.role,
+          ipAddress: req.ip,
+          details: { channel: session.channel },
+        });
 
         return res.json({
           success: true,
@@ -1113,14 +1165,81 @@ export function createAuthRouter(io) {
         $or: [{ email: cleanInput.toLowerCase() }, { phone: cleanInput }, { phone: normalizePhoneNumber(cleanInput) }],
       });
 
+      // Account Enumeration Protection: constant response for non-existent users
       if (!user) {
+        await logSecurityEvent({
+          action: 'AUTH_LOGIN_FAILED_NONEXISTENT',
+          performedBy: cleanInput,
+          ipAddress: req.ip,
+        });
         return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your details.' });
+      }
+
+      // Check account lockout status (5 attempts -> 15 min lock)
+      if (user.isLocked && user.isLocked()) {
+        const remainingMs = new Date(user.lockUntil).getTime() - Date.now();
+        const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+
+        await logSecurityEvent({
+          action: 'AUTH_LOGIN_BLOCKED_LOCKED',
+          entity: 'User',
+          entityId: user._id,
+          performedBy: user.email,
+          role: user.role,
+          ipAddress: req.ip,
+          details: { remainingMinutes },
+        });
+
+        return res.status(423).json({
+          success: false,
+          message: `Account is temporarily locked due to multiple failed login attempts. Please try again after ${remainingMinutes} minute(s).`,
+        });
       }
 
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your password.' });
+        let lockResult = { isLocked: false, attemptsRemaining: 4 };
+        if (user.handleFailedLogin) {
+          lockResult = await user.handleFailedLogin(5, 15);
+        }
+
+        await logSecurityEvent({
+          action: lockResult.isLocked ? 'AUTH_ACCOUNT_LOCKED' : 'AUTH_LOGIN_FAILED',
+          entity: 'User',
+          entityId: user._id,
+          performedBy: user.email,
+          role: user.role,
+          ipAddress: req.ip,
+          details: { attemptsRemaining: lockResult.attemptsRemaining, isLocked: lockResult.isLocked },
+        });
+
+        if (lockResult.isLocked) {
+          return res.status(423).json({
+            success: false,
+            message: 'Account has been temporarily locked for 15 minutes due to 5 consecutive failed login attempts.',
+          });
+        }
+
+        const warningMsg = lockResult.attemptsRemaining <= 2
+          ? `Invalid credentials. Warning: ${lockResult.attemptsRemaining} attempt(s) remaining before temporary account lock.`
+          : 'Invalid credentials. Please check your password.';
+
+        return res.status(401).json({ success: false, message: warningMsg });
       }
+
+      // Reset lockout counter upon successful login
+      if (user.handleSuccessfulLogin) {
+        await user.handleSuccessfulLogin();
+      }
+
+      await logSecurityEvent({
+        action: 'AUTH_LOGIN_SUCCESS',
+        entity: 'User',
+        entityId: user._id,
+        performedBy: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+      });
 
       return res.json({
         success: true,
@@ -1145,20 +1264,30 @@ export function createAuthRouter(io) {
 
   /**
    * @route   POST /api/auth/reset-password
-   * @desc    Reset password after OTP verification
-   * @access  Public (Rate-limited)
+   * @desc    Reset password after OTP verification with strong password enforcement
+   * @access  Public (Rate-limited, strong password enforced)
    */
-  router.post('/reset-password', authLimiter, async (req, res) => {
+  router.post('/reset-password', passwordResetLimiter, async (req, res) => {
     try {
       const { verificationId, newPassword } = req.body;
 
-      if (!verificationId || !newPassword || newPassword.length < 8) {
-        return res.status(400).json({ success: false, message: 'Valid verification session and 8+ character password required.' });
+      if (!verificationId || !newPassword) {
+        return res.status(400).json({ success: false, message: 'Valid verification session and password are required.' });
+      }
+
+      // Strong password validation
+      const pwdValidation = validateStrongPassword(newPassword);
+      if (!pwdValidation.isValid) {
+        return res.status(400).json({ success: false, message: pwdValidation.message });
       }
 
       const session = await OTPVerification.findOne({ verificationId });
       if (!session || (!session.phoneVerified && !session.emailVerified)) {
         return res.status(400).json({ success: false, message: 'Verification session expired or not verified.' });
+      }
+
+      if (session.isCompleted) {
+        return res.status(400).json({ success: false, message: 'This verification session has already been used.' });
       }
 
       const user = await User.findOne({
@@ -1170,10 +1299,22 @@ export function createAuthRouter(io) {
       }
 
       user.password = newPassword;
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined;
+      user.passwordChangedAt = new Date();
       await user.save();
 
       session.isCompleted = true;
       await session.save();
+
+      await logSecurityEvent({
+        action: 'PASSWORD_RESET_SUCCESS',
+        entity: 'User',
+        entityId: user._id,
+        performedBy: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+      });
 
       return res.json({
         success: true,
@@ -1182,6 +1323,31 @@ export function createAuthRouter(io) {
     } catch (error) {
       console.error('❌ [Reset Password Error]:', error.message);
       return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+    }
+  });
+
+  /**
+   * @route   POST /api/auth/logout
+   * @desc    Secure citizen & officer logout with session invalidation & audit log
+   * @access  Private
+   */
+  router.post('/logout', protect, async (req, res) => {
+    try {
+      await logSecurityEvent({
+        action: 'AUTH_LOGOUT',
+        entity: 'User',
+        entityId: req.user._id,
+        performedBy: req.user.email,
+        role: req.user.role,
+        ipAddress: req.ip,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Signed out securely.',
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
     }
   });
 

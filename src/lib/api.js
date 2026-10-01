@@ -50,6 +50,7 @@ export const api = {
   createComplaint: (data) => fetchJSON('/complaints', { method: 'POST', body: JSON.stringify(data) }),
   deleteComplaint: (id) => fetchJSON(`/complaints/${id}`, { method: 'DELETE' }),
   updateComplaintStatus: (id, data) => fetchJSON(`/complaints/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
+  assignOfficer: (id, data) => fetchJSON(`/complaints/${id}/assign`, { method: 'PATCH', body: JSON.stringify(data) }),
   addRemark: (id, data) => fetchJSON(`/complaints/${id}/remarks`, { method: 'POST', body: JSON.stringify(data) }),
   getOfficerComplaints: (params = '') => fetchJSON(`/complaints/officer${params ? `?${params}` : ''}`),
   getAdminComplaints: (params = '') => fetchJSON(`/complaints/admin${params ? `?${params}` : ''}`),

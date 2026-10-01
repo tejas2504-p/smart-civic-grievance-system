@@ -24,10 +24,17 @@ import { api } from '../../lib/api';
 import { io } from 'socket.io-client';
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  fullName: z.string().min(2, 'Full name must be at least 2 characters').max(100, 'Full name must not exceed 100 characters'),
   mobile: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number (without +91 or 0)'),
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email('Enter a valid email address').max(254, 'Email must not exceed 254 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long')
+    .max(128, 'Password must not exceed 128 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter (A-Z)')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter (a-z)')
+    .regex(/[0-9]/, 'Password must contain at least one number (0-9)')
+    .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/, 'Password must contain at least one special character (!@#$%^&*)'),
   confirmPassword: z.string(),
   address: z.string().min(5, 'Street address is required'),
   city: z.string().min(2, 'City / District is required'),
@@ -49,7 +56,14 @@ const Field = ({ id, label, error, required, children }) => (
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, role } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const dest = role === 'admin' ? '/admin' : role === 'officer' ? '/officer' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
+  }, [user, role, navigate]);
 
   // UI Steps: 1 = Details + CAPTCHA, 2 = OTP Verification, 3 = Complete
   const [step, setStep] = useState(1);

@@ -2,6 +2,8 @@ import express from 'express';
 import Complaint from '../models/Complaint.js';
 import Notification from '../models/Notification.js';
 import { protect, authorizeRoles } from '../middleware/auth.js';
+import { validateAttachment, sanitizeFilename } from '../utils/fileSecurity.js';
+import { logSecurityEvent } from '../utils/auditLogger.js';
 
 export function createComplaintRouter(io) {
   const router = express.Router();
@@ -38,6 +40,23 @@ export function createComplaintRouter(io) {
         });
       }
 
+      // Security: Validate document attachments against malicious/executable files
+      const cleanAttachments = [];
+      if (Array.isArray(attachments)) {
+        for (const att of attachments) {
+          if (att && typeof att === 'object') {
+            const check = validateAttachment(att);
+            if (!check.isValid) {
+              return res.status(400).json({ success: false, message: check.message });
+            }
+            cleanAttachments.push({
+              ...att,
+              name: sanitizeFilename(att.name),
+            });
+          }
+        }
+      }
+
       const generatedId = await generateComplaintId();
 
       // STRICT USER ISOLATION: userId is derived directly from verified JWT
@@ -57,7 +76,7 @@ export function createComplaintRouter(io) {
           phone: req.user.phone || '',
           email: req.user.email || '',
         },
-        attachments,
+        attachments: cleanAttachments,
         timeline: [
           {
             status: 'Submitted',
@@ -70,6 +89,16 @@ export function createComplaintRouter(io) {
       });
 
       await complaint.save();
+
+      await logSecurityEvent({
+        action: 'COMPLAINT_CREATED',
+        entity: 'Complaint',
+        entityId: complaint.id,
+        performedBy: req.user.email,
+        role: req.user.role,
+        ipAddress: req.ip,
+        details: { category: complaint.category, department: complaint.department },
+      });
 
       // Create notification for citizen
       const citizenNotif = await Notification.create({
@@ -599,6 +628,112 @@ export function createComplaintRouter(io) {
     } catch (error) {
       console.error('❌ [Update Status Error]:', error.message);
       res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  /**
+   * @route   PATCH /api/complaints/:id/assign
+   * @desc    Assign officer to complaint with automatic transparency timeline update
+   * @access  Private (Admin only)
+   */
+  router.patch('/:id/assign', protect, authorizeRoles('admin'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { officerId, officerName, officerEmail, department, remarks } = req.body;
+
+      if (!officerName) {
+        return res.status(400).json({ success: false, message: 'Officer name is required.' });
+      }
+
+      let complaint = await Complaint.findOne({ id });
+      if (!complaint && id.match(/^[0-9a-fA-F]{24}$/)) {
+        complaint = await Complaint.findById(id);
+      }
+
+      if (!complaint) {
+        return res.status(404).json({ success: false, message: 'Complaint not found.' });
+      }
+
+      const assignedOfficerData = {
+        id: officerId || 'OFF-' + Math.floor(100 + Math.random() * 900),
+        name: officerName.trim(),
+        email: officerEmail || '',
+        department: department || complaint.department,
+        assignedAt: new Date(),
+        assignedBy: req.user.name || 'Administrator',
+      };
+
+      complaint.assignedOfficer = assignedOfficerData;
+      complaint.officer = assignedOfficerData; // backwards compatibility
+
+      // If status was Submitted or Under Review, advance it to Assigned
+      const previousStatus = complaint.status;
+      if (['Submitted', 'Under Review'].includes(complaint.status)) {
+        complaint.status = 'Assigned';
+      }
+      complaint.updatedDate = new Date();
+
+      // Transparency timeline audit event
+      complaint.timeline.push({
+        status: complaint.status,
+        date: new Date(),
+        updatedBy: req.user.name || 'Administrator',
+        role: 'admin',
+        remarks: remarks || `Officer ${assignedOfficerData.name} (${assignedOfficerData.department}) officially assigned to resolve this grievance.`,
+      });
+
+      await complaint.save();
+
+      // Dispatch notification to citizen
+      const notif = await Notification.create({
+        userId: complaint.userId ? complaint.userId.toString() : 'all',
+        role: 'citizen',
+        complaintId: complaint.id,
+        title: `Officer Assigned: ${complaint.id}`,
+        message: `Government Officer ${assignedOfficerData.name} (${assignedOfficerData.department}) has been assigned to your grievance "${complaint.title}".`,
+        type: 'status_change',
+      });
+
+      // Realtime WebSocket broadcast
+      if (io) {
+        const assignPayload = {
+          complaintId: complaint.id,
+          assignedOfficer: assignedOfficerData,
+          status: complaint.status,
+          complaint,
+          notification: notif,
+          updatedBy: req.user.name,
+        };
+
+        if (complaint.userId) {
+          io.to(`user:${complaint.userId}`).emit('complaint:assigned', assignPayload);
+          io.to(`user:${complaint.userId}`).emit('status_updated', assignPayload);
+        }
+        io.to('role:admin').emit('complaint:assigned', assignPayload);
+        io.to('role:admin').emit('status_updated', assignPayload);
+        if (assignedOfficerData.department) {
+          io.to(`dept:${assignedOfficerData.department}`).emit('status_updated', assignPayload);
+        }
+      }
+
+      await logSecurityEvent({
+        action: 'OFFICER_ASSIGNED',
+        entity: 'Complaint',
+        entityId: complaint.id,
+        performedBy: req.user.email,
+        role: req.user.role,
+        ipAddress: req.ip,
+        details: { officer: assignedOfficerData },
+      });
+
+      return res.json({
+        success: true,
+        message: `Officer ${assignedOfficerData.name} assigned to grievance ${complaint.id} successfully.`,
+        data: complaint,
+      });
+    } catch (error) {
+      console.error('❌ [Assign Officer Error]:', error.message);
+      return res.status(500).json({ success: false, message: error.message });
     }
   });
 

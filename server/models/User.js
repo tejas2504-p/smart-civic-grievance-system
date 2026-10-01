@@ -52,6 +52,19 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockUntil: {
+    type: Date,
+  },
+  lastLoginAt: {
+    type: Date,
+  },
+  passwordChangedAt: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -72,6 +85,42 @@ userSchema.index({ department: 1 });
 // Compare password method
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Check if account is currently locked
+userSchema.methods.isLocked = function () {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+};
+
+// Handle failed login attempt with progressive delay & temporary lockout (15 minutes)
+userSchema.methods.handleFailedLogin = async function (maxAttempts = 5, lockTimeMinutes = 15) {
+  // If previous lock has expired, reset counter to 1
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    this.failedLoginAttempts = 1;
+    this.lockUntil = undefined;
+  } else {
+    this.failedLoginAttempts = (this.failedLoginAttempts || 0) + 1;
+  }
+
+  // Lock account if max attempts exceeded
+  if (this.failedLoginAttempts >= maxAttempts) {
+    this.lockUntil = new Date(Date.now() + lockTimeMinutes * 60 * 1000);
+  }
+
+  await this.save();
+  return {
+    isLocked: this.isLocked(),
+    attemptsRemaining: Math.max(0, maxAttempts - this.failedLoginAttempts),
+    lockUntil: this.lockUntil,
+  };
+};
+
+// Reset lockout state on successful authentication
+userSchema.methods.handleSuccessfulLogin = async function () {
+  this.failedLoginAttempts = 0;
+  this.lockUntil = undefined;
+  this.lastLoginAt = new Date();
+  await this.save();
 };
 
 export default mongoose.models.User || mongoose.model('User', userSchema);

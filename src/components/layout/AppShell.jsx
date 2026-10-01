@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import { useAuth } from '../../store/AuthContext';
 import { Toaster } from 'sonner';
 import ScrollToTop from '../ui/ScrollToTop';
+import AIAssistant from '../ai/AIAssistant';
 
 export default function AppShell() {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ export default function AppShell() {
         }}
       />
       <ScrollToTop />
+      <AIAssistant />
     </div>
   );
 }

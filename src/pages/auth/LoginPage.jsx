@@ -28,7 +28,14 @@ const passwordLoginSchema = z.object({
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, role } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const dest = role === 'admin' ? '/admin' : role === 'officer' ? '/officer' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
+  }, [user, role, navigate]);
 
   // Mode: 'password' | 'otp'
   const [authMode, setAuthMode] = useState('password');

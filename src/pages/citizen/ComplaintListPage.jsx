@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
 import { StatusBadge, PriorityBadge, SearchBox, Pagination, EmptyState, TabList } from '../../components/ui/SharedComponents';
 import { formatDate, truncate } from '../../lib/utils';
-import { FileText, PlusCircle, Filter, ChevronRight, Trash2 } from 'lucide-react';
+import { FileText, PlusCircle, Filter, ChevronRight, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import AssignOfficerModal from '../../components/admin/AssignOfficerModal';
 
 const STATUS_TABS = [
   { label: 'All', value: 'all' },
@@ -14,11 +16,13 @@ const STATUS_TABS = [
 ];
 
 export default function ComplaintListPage() {
-  const { complaints, loading, deleteComplaint } = useData();
+  const { role } = useAuth();
+  const { complaints, loading, deleteComplaint, assignOfficer } = useData();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState(null);
+  const [assigningComplaint, setAssigningComplaint] = useState(null);
   const pageSize = 10;
 
   const handleDelete = async (e, id) => {
@@ -133,6 +137,21 @@ export default function ComplaintListPage() {
                     <td><StatusBadge status={c.status} /></td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {role === 'admin' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setAssigningComplaint(c);
+                            }}
+                            className="btn btn-primary btn-sm"
+                            title="Assign officer"
+                            style={{ fontSize: '0.75rem', padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <UserCheck size={13} /> Assign
+                          </button>
+                        )}
                         <Link to={`/complaints/${c.id}`} className="btn btn-ghost btn-sm" style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                           View <ChevronRight size={12} />
                         </Link>
@@ -172,6 +191,19 @@ export default function ComplaintListPage() {
           </div>
         )}
       </div>
+
+      {/* Admin Assign Officer Modal */}
+      {role === 'admin' && (
+        <AssignOfficerModal
+          open={Boolean(assigningComplaint)}
+          onClose={() => setAssigningComplaint(null)}
+          complaint={assigningComplaint}
+          onAssign={async (cid, data) => {
+            await assignOfficer(cid, data);
+            setAssigningComplaint(null);
+          }}
+        />
+      )}
     </div>
   );
 }

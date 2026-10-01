@@ -1,11 +1,15 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
 import { StatusBadge, PriorityBadge, Breadcrumb, Alert } from '../../components/ui/SharedComponents';
 import { formatDate, formatDateTime } from '../../lib/utils';
-import { MapPin, Calendar, User, Clock, Send, CheckCircle, AlertTriangle, Download, RotateCcw, Sparkles, Trash2 } from 'lucide-react';
+import { MapPin, Calendar, User, Clock, Send, CheckCircle, AlertTriangle, Download, RotateCcw, Sparkles, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import AIStatusExplainer from '../../components/ai/AIStatusExplainer';
+import GrievanceProgressTracker from '../../components/ui/GrievanceProgressTracker';
+import AssignOfficerModal from '../../components/admin/AssignOfficerModal';
 
 // Lazy load map to avoid SSR issues
 const MapSection = lazy(() => import('../../components/maps/MapSection'));
@@ -50,12 +54,14 @@ function Timeline({ items = [] }) {
 export default function ComplaintDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deleteComplaint } = useData();
+  const { role } = useAuth();
+  const { deleteComplaint, assignOfficer } = useData();
 
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
 
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -179,12 +185,24 @@ export default function ComplaintDetailPage() {
               </span>
               <PriorityBadge priority={complaint.priority} />
               <StatusBadge status={complaint.status} />
+              <AIStatusExplainer status={complaint.status} complaintId={complaint.id} />
             </div>
             <h1 style={{ fontSize: 'clamp(1.1rem, 3.5vw, 1.25rem)', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
               {complaint.title}
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {/* Admin Assign Officer Button */}
+            {role === 'admin' && (
+              <button
+                onClick={() => setShowAssign(true)}
+                className="btn btn-primary btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <UserCheck size={14} /> Assign Officer
+              </button>
+            )}
+
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -201,6 +219,9 @@ export default function ComplaintDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Real-time Order & Resolution Progress Pipeline */}
+      <GrievanceProgressTracker complaint={complaint} />
 
       <div className="grid-responsive-sidebar">
         {/* Main content */}
@@ -306,6 +327,21 @@ export default function ComplaintDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Assign Officer Modal */}
+      {role === 'admin' && (
+        <AssignOfficerModal
+          open={showAssign}
+          onClose={() => setShowAssign(false)}
+          complaint={complaint}
+          onAssign={async (cid, data) => {
+            const updated = await assignOfficer(cid, data);
+            if (updated) {
+              setComplaint(updated);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

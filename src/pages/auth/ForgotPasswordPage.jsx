@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Mail,
   Smartphone,
@@ -14,8 +14,19 @@ import { toast } from 'sonner';
 import { Spinner } from '../../components/ui/SharedComponents';
 import TurnstileCaptcha from '../../components/common/TurnstileCaptcha';
 import { api } from '../../lib/api';
+import { useAuth } from '../../store/AuthContext';
 
 export default function ForgotPasswordPage() {
+  const navigate = useNavigate();
+  const { user, role } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const dest = role === 'admin' ? '/admin' : role === 'officer' ? '/officer' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
+  }, [user, role, navigate]);
+
   const [step, setStep] = useState(1); // 1: contact + CAPTCHA, 2: OTP + new password, 3: success
   const [channel, setChannel] = useState('email'); // 'email' | 'mobile'
   const [target, setTarget] = useState('');
@@ -108,7 +119,27 @@ export default function ForgotPasswordPage() {
     }
 
     if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters long.');
+      toast.error('New password must be at least 8 characters long (12+ recommended).');
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error('Password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      toast.error('Password must contain at least one lowercase letter (a-z).');
+      return;
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error('Password must contain at least one number (0-9).');
+      return;
+    }
+
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(newPassword)) {
+      toast.error('Password must contain at least one special character (!@#$%^&*).');
       return;
     }
 

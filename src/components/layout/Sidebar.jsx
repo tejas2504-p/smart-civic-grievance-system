@@ -3,11 +3,12 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../store/AuthContext';
 import { useData } from '../../store/DataContext';
+import { useTheme } from '../../store/ThemeContext';
 import {
   LayoutDashboard, FileText, PlusCircle, Bell, User,
   BarChart2, Building2, Users, Tag, Clock, Settings,
   HelpCircle, MessageSquare, ChevronLeft, ChevronRight,
-  MapPin, FileBarChart, LogOut
+  MapPin, FileBarChart, LogOut, Moon, Sun
 } from 'lucide-react';
 
 const citizenNav = [
@@ -66,6 +67,7 @@ function NavItem({ item, collapsed, unread }) {
 }
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
+  const { isDark, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const { role, user, logout } = useAuth();
   const { notifications = [] } = useData();
@@ -119,6 +121,18 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
 
       {/* Bottom links */}
       <div style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="sidebar-nav-item"
+          style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#FDE047' : '#93C5FD' }}
+          title={collapsed ? (isDark ? 'Light Mode' : 'Dark Mode') : undefined}
+          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {isDark ? <Sun size={18} className="icon" color="#FDE047" /> : <Moon size={18} className="icon" color="#93C5FD" />}
+          {!collapsed && <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+        </button>
+
         <NavLink to="/help" className="sidebar-nav-item" title={collapsed ? 'Help' : undefined}>
           <HelpCircle size={18} className="icon" />
           {!collapsed && <span>Help</span>}
@@ -157,7 +171,18 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
             </NavLink>
           ))}
         </nav>
-        <div style={{ padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <button
+            onClick={() => {
+              toggleTheme();
+              onClose();
+            }}
+            className="sidebar-nav-item"
+            style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#FDE047' : '#93C5FD', padding: '12px 18px', fontSize: '0.925rem' }}
+          >
+            {isDark ? <Sun size={19} className="icon" color="#FDE047" /> : <Moon size={19} className="icon" color="#93C5FD" />}
+            <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+          </button>
           <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: 'rgba(255,120,120,0.95)', padding: '12px 18px', fontSize: '0.925rem' }}>
             <LogOut size={19} className="icon" />
             <span>Logout</span>
