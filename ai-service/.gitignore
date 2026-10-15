@@ -1,0 +1,18 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Large Datasets (~8 GB)
+datasets/
+unified_dataset/
+
+# Model training runs and weights
+runs/
+*.pt
