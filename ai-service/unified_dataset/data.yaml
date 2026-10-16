@@ -1,4 +1,4 @@
-path: C:/Users/tejas/OneDrive/文件/Projects/111Smart Government Grievance Portal/111Smart Government Grievance Portal/ai-service/unified_dataset
+path: /home/ruchik/Projects/Personal/smart-civic-grievance-system/ai-service/unified_dataset
 train: images/train
 val: images/val
 test: images/test

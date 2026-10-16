@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-15T15:19:27.781254+00:00",
+  "generated_at": "2026-10-16T15:51:08.672470+00:00",
   "is_dry_run": true,
-  "output_directory": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\unified_dataset",
+  "output_directory": "/home/ruchik/Projects/Personal/smart-civic-grievance-system/ai-service/unified_dataset",
   "target_classes": {
     "0": "pothole",
     "1": "garbage",
@@ -14,181 +14,131 @@
     "8": "open_manhole",
     "9": "damaged_footpath"
   },
-  "source_dataset_images": {
-    "drainage": 3181,
-    "garbage": 6796,
-    "infrastructure": 2401,
-    "potholes": 2156,
-    "smoke": 272,
-    "waterlogging": 1414
-  },
-  "total_unique_images": 16220,
-  "source_image_groups": 14349,
-  "duplicate_images_filtered": 502,
-  "near_duplicate_groups": 1198,
-  "near_duplicate_images": 3069,
-  "total_annotations_mapped": 19146,
+  "source_dataset_images": {},
+  "total_unique_images": 0,
+  "source_image_groups": 0,
+  "duplicate_images_filtered": 0,
+  "near_duplicate_groups": 0,
+  "near_duplicate_images": 0,
+  "total_annotations_mapped": 0,
   "missing_label_files": 0,
-  "invalid_annotations_excluded_count": 5,
-  "invalid_annotations_excluded": [
-    {
-      "file": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\datasets\\infrastructure\\Infrastructure.v1i.yolov8\\test\\labels\\img-415_jpg.rf.61ebdd35307c74cb8b9ff55b989a5b90.txt",
-      "line": 3,
-      "reason": "Line 3: Non-positive dimension: w=0.0, h=0.0033333333333333335",
-      "content": "5 0.68 0.545 0 0.0033333333333333335"
-    },
-    {
-      "file": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\datasets\\potholes\\Potholes detection.v1-pothhole.yolov8\\train\\labels\\450071446_816627890603841_3356396224916515178_n_cleanup_jpg.rf.94545c038d1d8de1b5f49d510fa57206.txt",
-      "line": 94,
-      "reason": "Line 94: Degenerate sub-pixel polygon (w=0.02956, h=0.00008)",
-      "content": "0 0.6143345656192237 0.8258888888888889 0.6438909426987062 0.8258888888888889 0.6438909426987062 0.8259722222222221 0.6143345656192237 0.8259722222222221"
-    },
-    {
-      "file": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\datasets\\potholes\\Potholes detection.v1-pothhole.yolov8\\train\\labels\\450071446_816627890603841_3356396224916515178_n_cleanup_jpg.rf.94545c038d1d8de1b5f49d510fa57206.txt",
-      "line": 95,
-      "reason": "Line 95: Degenerate sub-pixel polygon (w=0.01055, h=0.00004)",
-      "content": "0 0.6588632162661737 0.8138541666666667 0.6694177449168207 0.8138541666666667 0.6694177449168207 0.8138958333333334 0.6588632162661737 0.8138958333333334"
-    },
-    {
-      "file": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\datasets\\waterlogging\\Waterlogging.v1-waterlog.yolov8\\train\\labels\\waterlogging-flood-street2_jpg.rf.b16bf46c975e9543263d6a818efb1570.txt",
-      "line": 1,
-      "reason": "Line 1: Degenerate sub-pixel polygon (w=0.00016, h=0.00010)",
-      "content": "2 0.6789929890625 0.890676021875 0.67883949375 0.890680503125 0.6788458937499999 0.8907723640625 0.678999390625 0.8907678812500001 0.6789929890625 0.890676021875"
-    },
-    {
-      "file": "C:\\Users\\tejas\\OneDrive\\\u6587\u4ef6\\Projects\\111Smart Government Grievance Portal\\111Smart Government Grievance Portal\\ai-service\\datasets\\waterlogging\\Waterlogging.v1-waterlog.yolov8\\valid\\labels\\waterlogging-flood-street2_jpg.rf.c0dcc2d7907fc4d583fe2936031f2b5c.txt",
-      "line": 1,
-      "reason": "Line 1: Degenerate sub-pixel polygon (w=0.00015, h=0.00009)",
-      "content": "2 0.33758461562500003 0.13408256875 0.33743076875 0.13408256875 0.33743076875 0.1341743125 0.33758461562500003 0.1341743125 0.33758461562500003 0.13408256875"
-    }
-  ],
-  "excluded_classes_summary": {
-    "drainage: curb": 1269,
-    "drainage: can": 196,
-    "drainage: plastic_bottle": 87,
-    "garbage: Obnoxious_Vegetation": 616,
-    "garbage: Cleaned_Garbage_Bins": 1139,
-    "garbage: Dustbin_not_cleaned": 479,
-    "garbage: Sweeping_not_done": 1257,
-    "infrastructure: pipe-burst": 511,
-    "infrastructure: graffiti": 976,
-    "waterlogging: 0": 88,
-    "waterlogging: object": 17
-  },
+  "invalid_annotations_excluded_count": 0,
+  "invalid_annotations_excluded": [],
+  "excluded_classes_summary": {},
   "split_image_distribution": {
     "train": {
-      "count": 12957,
-      "percentage": 79.88
+      "count": 0,
+      "percentage": 0.0
     },
     "val": {
-      "count": 1644,
-      "percentage": 10.14
+      "count": 0,
+      "percentage": 0.0
     },
     "test": {
-      "count": 1619,
-      "percentage": 9.98
+      "count": 0,
+      "percentage": 0.0
     }
   },
   "class_annotation_distribution": {
     "pothole": {
       "id": 0,
-      "train": 6333,
-      "val": 814,
-      "test": 757,
-      "total": 7904,
-      "train_pct": 80.1,
-      "val_pct": 10.3,
-      "test_pct": 9.6
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "garbage": {
       "id": 1,
-      "train": 2977,
-      "val": 403,
-      "test": 372,
-      "total": 3752,
-      "train_pct": 79.3,
-      "val_pct": 10.7,
-      "test_pct": 9.9
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "drainage_issue": {
       "id": 2,
-      "train": 1981,
-      "val": 232,
-      "test": 238,
-      "total": 2451,
-      "train_pct": 80.8,
-      "val_pct": 9.5,
-      "test_pct": 9.7
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "waterlogging": {
       "id": 3,
-      "train": 2101,
-      "val": 268,
-      "test": 241,
-      "total": 2610,
-      "train_pct": 80.5,
-      "val_pct": 10.3,
-      "test_pct": 9.2
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "damaged_sign": {
       "id": 4,
-      "train": 243,
-      "val": 30,
-      "test": 30,
-      "total": 303,
-      "train_pct": 80.2,
-      "val_pct": 9.9,
-      "test_pct": 9.9
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "pole_damage": {
       "id": 5,
-      "train": 175,
-      "val": 24,
-      "test": 19,
-      "total": 218,
-      "train_pct": 80.3,
-      "val_pct": 11.0,
-      "test_pct": 8.7
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "fallen_tree": {
       "id": 6,
-      "train": 446,
-      "val": 60,
-      "test": 55,
-      "total": 561,
-      "train_pct": 79.5,
-      "val_pct": 10.7,
-      "test_pct": 9.8
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "smoke": {
       "id": 7,
-      "train": 308,
-      "val": 49,
-      "test": 53,
-      "total": 410,
-      "train_pct": 75.1,
-      "val_pct": 12.0,
-      "test_pct": 12.9
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "open_manhole": {
       "id": 8,
-      "train": 94,
-      "val": 11,
-      "test": 10,
-      "total": 115,
-      "train_pct": 81.7,
-      "val_pct": 9.6,
-      "test_pct": 8.7
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     },
     "damaged_footpath": {
       "id": 9,
-      "train": 659,
-      "val": 81,
-      "test": 82,
-      "total": 822,
-      "train_pct": 80.2,
-      "val_pct": 9.9,
-      "test_pct": 10.0
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0,
+      "train_pct": 0.0,
+      "val_pct": 0.0,
+      "test_pct": 0.0
     }
   }
 }

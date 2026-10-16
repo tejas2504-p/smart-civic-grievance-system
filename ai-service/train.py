@@ -19,7 +19,7 @@ def main():
         epochs=30,
         imgsz=416,
         batch=4,
-        device="cpu",
+        device=0,
         workers=0,
         project=str(base_dir / "runs" / "civic"),
         name="baseline",
