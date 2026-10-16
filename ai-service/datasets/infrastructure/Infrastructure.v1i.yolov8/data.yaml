@@ -1,0 +1,14 @@
+train: train/images
+val: valid/images
+test: test/images
+
+
+nc: 7
+names: ['damaged-sign', 'electricity-pole-damage', 'fallen-trees', 'graffiti', 'pipe-burst', 'pothole', 'thrash']
+
+roboflow:
+  workspace: tejas-prajapati
+  project: infrastructure-dtiwq-kbdr9
+  version: 1
+  license: CC BY 4.0
+  url: https://app.roboflow.com/tejas-prajapati/infrastructure-dtiwq-kbdr9/1

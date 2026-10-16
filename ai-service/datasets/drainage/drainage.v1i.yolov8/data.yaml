@@ -1,0 +1,14 @@
+train: train/images
+val: valid/images
+test: test/images
+
+
+nc: 5
+names: ['can', 'curb', 'drainage', 'manhole', 'plastic_bottle']
+
+roboflow:
+  workspace: tejas-prajapati
+  project: drainage-h5j8a-a3amd
+  version: 1
+  license: CC BY 4.0
+  url: https://app.roboflow.com/tejas-prajapati/drainage-h5j8a-a3amd/1

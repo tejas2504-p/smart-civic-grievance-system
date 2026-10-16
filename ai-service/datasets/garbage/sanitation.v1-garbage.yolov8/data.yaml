@@ -1,0 +1,14 @@
+train: train/images
+val: valid/images
+test: test/images
+
+
+nc: 10
+names: ['Broken_Footpath', 'C_D_Waste', 'Cleaned_Garbage_Bins', 'Clogged_Drain', 'Dustbin_not_cleaned', 'Garbage_Scattered', 'Obnoxious_Vegetation', 'Pothole_on_Road', 'Sweeping_not_done', 'waterlogging']
+
+roboflow:
+  workspace: tejas-prajapati
+  project: sanitation-ynpgx-4tscl
+  version: 1
+  license: CC BY 4.0
+  url: https://app.roboflow.com/tejas-prajapati/sanitation-ynpgx-4tscl/1

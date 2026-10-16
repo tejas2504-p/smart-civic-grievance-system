@@ -1,0 +1,16 @@
+path: C:/Users/tejas/OneDrive/文件/Projects/111Smart Government Grievance Portal/111Smart Government Grievance Portal/ai-service/unified_dataset
+train: images/train
+val: images/val
+test: images/test
+nc: 10
+names:
+  0: pothole
+  1: garbage
+  2: drainage_issue
+  3: waterlogging
+  4: damaged_sign
+  5: pole_damage
+  6: fallen_tree
+  7: smoke
+  8: open_manhole
+  9: damaged_footpath

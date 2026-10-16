@@ -8,11 +8,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
-
-# Large Datasets (~8 GB)
-datasets/
-unified_dataset/
+*.cache
 
 # Model training runs and weights
 runs/
 *.pt
+
+# Large image and annotation datasets (~7.9 GB total across 67,974 files)
+# Host externally (Hugging Face / Kaggle / GitHub Releases) per ai-service/DATASET_GUIDE.md
+# Run 'python download_dataset.py' to download and set up locally
+datasets/
+unified_dataset/
