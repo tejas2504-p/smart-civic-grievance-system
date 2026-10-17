@@ -19,3 +19,9 @@ runs/
 # Run 'python download_dataset.py' to download and set up locally
 datasets/
 unified_dataset/
+
+# Generated prediction outputs and temporary files
+predictions/
+runs/predictions/
+runs/detect/predict*/
+temp_uploads/

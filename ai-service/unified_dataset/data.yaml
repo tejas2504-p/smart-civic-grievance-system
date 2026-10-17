@@ -1,4 +1,3 @@
-path: /home/ruchik/Projects/Personal/smart-civic-grievance-system/ai-service/unified_dataset
 train: images/train
 val: images/val
 test: images/test

@@ -11,6 +11,8 @@ import { useData } from '../../store/DataContext';
 import { useAuth } from '../../store/AuthContext';
 import { AIFormFieldHelp, AIFormConsistencyBanner } from '../../components/ai/AIFormFieldHelp';
 import AIDocumentAssistant from '../../components/ai/AIDocumentAssistant';
+import AIVisionAssistant from '../../components/ai/AIVisionAssistant';
+import { analyzeGrievanceImage } from '../../services/ai/aiVisionService';
 import OpenStreetMapPicker from '../../components/maps/OpenStreetMapPicker';
 import MapSection from '../../components/maps/MapSection';
 
@@ -45,33 +47,34 @@ function StepIndicator({ currentStep }) {
   );
 }
 
-// AI analysis mock
-const mockAI = {
-  category: 'Road Infrastructure',
-  subcategory: 'Pothole',
-  priority: 'High',
-  department: 'Road Maintenance',
-  summary: 'Large pothole reported on main road causing safety hazard.',
-  confidence: 94,
-};
-
-function AIPanel({ visible }) {
+function AIPanel({ visible, aiData, formData }) {
   if (!visible) return null;
+  const isReal = Boolean(aiData?.hasDetections);
+  const confidence = isReal ? aiData.confidencePct : 92;
+  const defect = isReal ? aiData.primaryDefect : 'Civic Grievance';
+  const dept = isReal ? aiData.suggestedDepartment : (formData?.department || 'Road Maintenance');
+  const priority = isReal ? aiData.suggestedPriority : (formData?.priority || 'High');
+  const summary = isReal
+    ? `Bharat Civic Vision AI analyzed photo evidence and detected ${aiData.totalDetections} ${defect} defect(s). Recommended routing: ${dept}.`
+    : (formData?.description
+      ? `Grievance classified under ${formData?.category || 'Civic Infrastructure'} based on submitted problem description.`
+      : 'Grievance classified and ready for municipal department assignment.');
+
   return (
     <div style={{ marginTop: 20, padding: 16, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Sparkles size={16} color="var(--color-success)" />
         <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          AI Grievance Analysis
+          AI Grievance Analysis {isReal ? '(YOLO Vision)' : ''}
         </span>
         <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
-          {mockAI.confidence}% confidence
+          {confidence}% confidence
         </span>
       </div>
-      <p style={{ fontSize: '0.8125rem', color: '#166534', marginBottom: 10, lineHeight: 1.5 }}>{mockAI.summary}</p>
+      <p style={{ fontSize: '0.8125rem', color: '#166534', marginBottom: 10, lineHeight: 1.5 }}>{summary}</p>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.75rem', color: '#15803d' }}>
-        <span>Dept: <strong>{mockAI.department}</strong></span>
-        <span>Suggested Priority: <strong>{mockAI.priority}</strong></span>
+        <span>Dept: <strong>{dept}</strong></span>
+        <span>Suggested Priority: <strong>{priority}</strong></span>
         <span>Est. Resolution: <strong>48 hours</strong></span>
       </div>
     </div>
@@ -87,6 +90,8 @@ export default function NewComplaintPage() {
   const [files, setFiles] = useState([]);
   const [showAI, setShowAI] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [aiVisionResult, setAiVisionResult] = useState(null);
+  const [analyzingEvidenceIndex, setAnalyzingEvidenceIndex] = useState(null);
 
 
   const handleNext = (data) => {
@@ -150,8 +155,23 @@ export default function NewComplaintPage() {
               <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 20 }}>
                 Step 1 — Complaint Details
               </h2>
-              <Step1Form onNext={handleNext} initial={formData} />
-              <AIPanel visible={false} />
+              <Step1Form
+                onNext={handleNext}
+                initial={formData}
+                onFileSelected={(file) => setFiles((prev) => [...prev, file])}
+                aiVisionResult={aiVisionResult}
+                setAiVisionResult={setAiVisionResult}
+                onApplySuggestion={(sug) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: sug.category,
+                    subcategory: sug.subcategory,
+                    department: sug.department,
+                    priority: sug.priority,
+                  }));
+                }}
+              />
+              <AIPanel visible={false} aiData={aiVisionResult} formData={formData} />
             </div>
           )}
 
@@ -161,7 +181,7 @@ export default function NewComplaintPage() {
               <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 20 }}>
                 Step 2 — Location
               </h2>
-              {showAI && <AIPanel visible={true} />}
+              {showAI && <AIPanel visible={true} aiData={aiVisionResult} formData={formData} />}
               <Step2Form onNext={handleNext} onBack={() => setStep(1)} initial={formData} />
             </div>
           )}
@@ -202,18 +222,56 @@ export default function NewComplaintPage() {
                   <p style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: 10, color: 'var(--color-text-secondary)' }}>
                     {files.length} file{files.length > 1 ? 's' : ''} selected
                   </p>
-                  {files.map((file, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: '1.25rem' }}>{file.type.startsWith('image') ? '🖼️' : file.type.startsWith('video') ? '🎥' : '📄'}</span>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</p>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{(file.size / 1024).toFixed(1)} KB</p>
+                  {files.map((file, i) => {
+                    const isImg = file.type?.startsWith('image') || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 6, marginBottom: 6 }}>
+                        <span style={{ fontSize: '1.25rem' }}>{isImg ? '🖼️' : file.type?.startsWith('video') ? '🎥' : '📄'}</span>
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</p>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        {isImg && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAnalyzingEvidenceIndex(i);
+                              try {
+                                const res = await analyzeGrievanceImage(file);
+                                setAiVisionResult(res);
+                                if (res.hasDetections) {
+                                  toast.success(`AI detected ${res.primaryDefect} (${res.confidencePct}% match)!`);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    category: res.suggestedCategory,
+                                    subcategory: res.suggestedSubcategory,
+                                    department: res.suggestedDepartment,
+                                    priority: res.suggestedPriority,
+                                  }));
+                                } else {
+                                  toast.info('No recognizable civic defect detected in this image.');
+                                }
+                              } catch (err) {
+                                toast.error(err.message || 'Image analysis failed.');
+                              } finally {
+                                setAnalyzingEvidenceIndex(null);
+                              }
+                            }}
+                            disabled={analyzingEvidenceIndex !== null}
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#16a34a', display: 'flex', alignItems: 'center', gap: 4 }}
+                            title="Analyze this image with Bharat Civic Vision AI"
+                          >
+                            <Sparkles size={13} />
+                            {analyzingEvidenceIndex === i ? 'Analyzing...' : 'Analyze with AI'}
+                          </button>
+                        )}
+                        <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} aria-label="Remove file" className="btn btn-ghost btn-sm" style={{ padding: 4 }}>
+                          <X size={14} />
+                        </button>
                       </div>
-                      <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} aria-label="Remove file" className="btn btn-ghost btn-sm" style={{ padding: 4 }}>
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -272,7 +330,7 @@ export default function NewComplaintPage() {
               </div>
 
               {/* AI panel in review */}
-              <AIPanel visible={true} />
+              <AIPanel visible={true} aiData={aiVisionResult} formData={formData} />
 
               <Alert type="info" style={{ marginTop: 16 }}>
                 <div>
@@ -309,19 +367,56 @@ export default function NewComplaintPage() {
 }
 
 // Step 1 sub-form
-function Step1Form({ onNext, initial }) {
+function Step1Form({
+  onNext,
+  initial,
+  onFileSelected,
+  aiVisionResult,
+  setAiVisionResult,
+  onApplySuggestion,
+}) {
   const schema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters'),
     description: z.string().min(20, 'Please provide a more detailed description (min. 20 characters)'),
     category: z.string().min(1, 'Please select a category'),
     subcategory: z.string().optional(),
   });
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema), defaultValues: initial });
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: initial,
+  });
   const categoryValue = watch('category');
+  const subcategoryValue = watch('subcategory');
   const selectedCat = categories.find(c => c.name === categoryValue);
+
+  const handleApplyAISuggestion = (sug) => {
+    setValue('category', sug.category, { shouldValidate: true });
+    if (sug.subcategory) {
+      setValue('subcategory', sug.subcategory, { shouldValidate: true });
+    }
+    const curTitle = watch('title');
+    if (!curTitle || curTitle.trim().length === 0) {
+      setValue('title', `${sug.defect || 'Civic defect'} reported on site`, { shouldValidate: true });
+    }
+    toast.success(`Category updated to: ${sug.category}${sug.subcategory ? ' › ' + sug.subcategory : ''}`);
+    if (onApplySuggestion) {
+      onApplySuggestion(sug);
+    }
+    if (setAiVisionResult) {
+      setAiVisionResult((prev) => ({ ...(prev || {}), ...sug, hasDetections: true }));
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
+      {/* AI Vision Photo Assistant */}
+      <AIVisionAssistant
+        onApplySuggestion={handleApplyAISuggestion}
+        onFileSelected={onFileSelected}
+        currentCategory={categoryValue}
+        currentSubcategory={subcategoryValue}
+      />
+
       <div style={{ marginBottom: 16 }}>
         <label className="form-label" htmlFor="title">
           Complaint Title <span className="required" aria-hidden="true">*</span>

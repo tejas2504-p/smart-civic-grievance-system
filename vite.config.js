@@ -10,6 +10,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: 'localhost',
+    port: 5173,
+    strictPort: false,
+    watch: {
+      ignored: [
+        '**/ai-service/**',
+        '**/runs/**',
+        '**/datasets/**',
+        '**/unified_dataset/**',
+        '**/.venv/**',
+      ],
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

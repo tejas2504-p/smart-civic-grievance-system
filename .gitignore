@@ -26,3 +26,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI Vision datasets, runs, and weights (prevents Vite and Tailwind from scanning ~68,000 files)
+ai-service/unified_dataset/
+ai-service/datasets/
+ai-service/runs/
+ai-service/.venv/
+runs/
