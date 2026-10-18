@@ -375,7 +375,7 @@ export default function AIServiceSearch({ onSelectService, onAskAI, headerAction
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #E2E8F0', pb: 12 }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#09223e', margin: 0 }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#172033', margin: 0 }}>
                   {selectedDocService.name}
                 </h3>
                 <span style={{ fontSize: '0.75rem', color: '#64748B' }}>Official Document Verification Checklist</span>

@@ -199,7 +199,7 @@ export default function ScreenReaderModal({ isOpen, onClose }) {
         style={{ maxWidth: 'min(640px, calc(100vw - 20px))', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >
         {/* Header */}
-        <div className="ad-marquee-modal-header" style={{ background: '#09223e', color: '#fff', borderBottom: 'none' }}>
+        <div className="ad-marquee-modal-header" style={{ background: '#174EA6', color: '#fff', borderBottom: '3px solid #F28C28' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Headphones size={18} color="#FF9933" />
