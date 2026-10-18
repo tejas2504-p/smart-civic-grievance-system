@@ -131,8 +131,9 @@ export default function HeroSlider() {
         borderRadius: '16px',
         overflow: 'hidden',
         boxShadow: isHovered 
-          ? '0 20px 40px -10px rgba(9, 34, 62, 0.35), 0 0 20px rgba(255, 153, 51, 0.2)' 
-          : '0 12px 28px rgba(0, 0, 0, 0.18)',
+          ? '0 16px 36px -8px rgba(23, 78, 166, 0.12), 0 4px 12px rgba(0,0,0,0.03)' 
+          : '0 8px 24px -4px rgba(23, 78, 166, 0.08), 0 2px 6px rgba(0,0,0,0.02)',
+        border: '1px solid #E5EAF2',
         background: '#ffffff',
         cursor: 'pointer',
         userSelect: 'none',
@@ -339,9 +340,10 @@ export default function HeroSlider() {
           gap: '8px',
           padding: '6px 14px',
           borderRadius: '20px',
-          background: 'rgba(9, 34, 62, 0.8)',
+          background: 'rgba(255, 255, 255, 0.94)',
+          border: '1px solid #E5EAF2',
           backdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         }}
       >
         {sliderImages.map((_, index) => {
@@ -352,14 +354,13 @@ export default function HeroSlider() {
               onClick={(e) => handleDotClick(index, e)}
               style={{
                 border: 'none',
-                width: isActive ? '26px' : '8px',
+                width: isActive ? '24px' : '8px',
                 height: '8px',
                 borderRadius: '4px',
-                background: isActive ? '#FF9933' : 'rgba(255, 255, 255, 0.55)',
+                background: isActive ? '#2563EB' : '#CBD5E1',
                 cursor: 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                 padding: 0,
-                boxShadow: isActive ? '0 0 8px rgba(255, 153, 51, 0.8)' : 'none',
               }}
               aria-label={`Go to slide ${index + 1}`}
               aria-current={isActive ? 'true' : 'false'}

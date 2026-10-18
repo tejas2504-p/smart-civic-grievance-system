@@ -157,14 +157,14 @@ export default function AIAssistant() {
             onClick={() => setIsOpen(true)}
             aria-label="Open AI Government Assistant"
             style={{
-              background: 'linear-gradient(135deg, #123B63 0%, #09223e 100%)',
+              background: 'linear-gradient(135deg, #174EA6 0%, #2563EB 100%)',
               color: '#ffffff',
-              border: '2px solid rgba(255, 255, 255, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
               borderRadius: 999,
-              padding: '12px 20px',
-              fontSize: '0.925rem',
-              fontWeight: 700,
-              boxShadow: '0 8px 24px rgba(18, 59, 99, 0.35)',
+              padding: '11px 20px',
+              fontSize: '0.9rem',
+              fontWeight: 650,
+              boxShadow: '0 8px 24px -2px rgba(37, 99, 235, 0.35), 0 2px 6px rgba(0, 0, 0, 0.08)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -175,19 +175,19 @@ export default function AIAssistant() {
           >
             <div
               style={{
-                width: 28,
-                height: 28,
+                width: 26,
+                height: 26,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF6B35 0%, #FFA133 100%)',
+                background: 'rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Sparkles size={16} color="#fff" />
+              <Sparkles size={15} color="#fff" />
             </div>
             <span>
-              {currentLang === 'mr' ? '🤖 विचार AI' : currentLang === 'hi' ? '🤖 पूछें AI' : '🤖 Ask AI'}
+              {currentLang === 'mr' ? 'विचार AI' : currentLang === 'hi' ? 'पूछें AI' : 'Ask AI'}
             </span>
           </button>
         )}
@@ -206,24 +206,24 @@ export default function AIAssistant() {
             height: 'clamp(480px, 82vh, 640px)',
             background: '#ffffff',
             borderRadius: 16,
-            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.22)',
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.18)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
             zIndex: 9999,
-            border: '1px solid #E2E8F0',
+            border: '1px solid #E5EAF2',
           }}
         >
           {/* Header */}
           <div
             style={{
-              background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)',
+              background: 'linear-gradient(135deg, #174EA6 0%, #1E40AF 100%)',
               color: '#ffffff',
               padding: '14px 16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderBottom: '3px solid #FF9933',
+              borderBottom: '3px solid #F28C28',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import mongoose from 'mongoose';
 import { connectDB } from './config/db.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createComplaintRouter } from './routes/complaints.js';
@@ -63,8 +64,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // NoSQL Injection Protection: strip prohibited keys ($ and .)
 app.use(mongoSanitizeMiddleware);
 
-// Connect to MongoDB Atlas
-connectDB();
+// Connect to Database (Atlas with automatic local In-Memory fallback)
+await connectDB();
+
+// Database readiness guard: ensure requests are handled only when connected
+app.use((req, res, next) => {
+  if (req.path === '/api/health' || req.path === '/' || req.path.startsWith('/public')) {
+    return next();
+  }
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection is still initializing. Please try again in a few moments.',
+    });
+  }
+  next();
+});
 
 // Socket.IO Real-time Connection Lifecycle
 io.on('connection', (socket) => {
@@ -218,7 +233,7 @@ server.listen(PORT, () => {
   🚀 [Backend Server] Running on http://localhost:${PORT}
   📡 [WebSockets] Socket.IO server is active
   🛡️ [Security] Real-Time OTP (SMS/Email) & CAPTCHA Active
-  📦 [Database] MongoDB Atlas connection initializing...
+  📦 [Database] Database connected & ready
   =======================================================
   `);
 });

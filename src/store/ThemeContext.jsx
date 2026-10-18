@@ -4,13 +4,9 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    // Check saved theme in localStorage
+    // Default to light theme for premium white government portal
     const saved = localStorage.getItem('bcc_theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
     return 'light';
   });
 

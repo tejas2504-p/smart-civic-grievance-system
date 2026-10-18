@@ -48,7 +48,7 @@ function NavItem({ item, collapsed, unread }) {
       className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
       title={collapsed ? item.label : undefined}
       aria-label={item.label}
-      style={item.accent ? { background: 'rgba(230,126,34,0.18)', color: '#f5a623' } : undefined}
+      style={item.accent ? { background: '#FFF7ED', color: '#C2410C', border: '1px solid #FFEDD5', fontWeight: 600 } : undefined}
     >
       <span style={{ position: 'relative', flexShrink: 0 }}>
         <Icon size={18} className="icon" />
@@ -91,13 +91,13 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
       aria-label="Main navigation"
     >
       {/* Portal info */}
-      <div style={{ padding: collapsed ? '16px 8px' : '16px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: collapsed ? '16px 8px' : '16px 16px', borderBottom: '1px solid #E5EAF2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {!collapsed && (
           <div>
-            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            <p style={{ fontSize: '0.725rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 650, marginBottom: 2 }}>
               {role === 'admin' ? 'Admin Panel' : role === 'officer' ? 'Officer Panel' : 'Citizen Portal'}
             </p>
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
+            <p style={{ fontSize: '0.9rem', fontWeight: 750, color: '#172033', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
               {typeof user?.name === 'string' ? user.name.split(' ')[0] : 'User'}
             </p>
           </div>
@@ -106,31 +106,31 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
           className="btn btn-ghost btn-sm"
           onClick={onToggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{ color: 'rgba(255,255,255,0.7)', padding: '4px', marginLeft: 'auto' }}
+          style={{ color: '#64748B', padding: '4px', marginLeft: 'auto', borderRadius: 6 }}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
+      <nav style={{ flex: 1, padding: '10px 0', overflowY: 'auto', overflowX: 'hidden' }}>
         {navItems.map(item => (
           <NavItem key={item.to} item={item} collapsed={collapsed} unread={unread} />
         ))}
       </nav>
 
       {/* Bottom links */}
-      <div style={{ padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ padding: '8px 0', borderTop: '1px solid #E5EAF2' }}>
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
           className="sidebar-nav-item"
-          style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#FDE047' : '#93C5FD' }}
-          title={collapsed ? (isDark ? 'Light Mode' : 'Dark Mode') : undefined}
+          style={{ width: 'calc(100% - 20px)', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#D97706' : '#2563EB' }}
+          title={collapsed ? (isDark ? 'Light Theme' : 'Dark Mode') : undefined}
           aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {isDark ? <Sun size={18} className="icon" color="#FDE047" /> : <Moon size={18} className="icon" color="#93C5FD" />}
-          {!collapsed && <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+          {isDark ? <Sun size={18} className="icon" color="#D97706" /> : <Moon size={18} className="icon" color="#2563EB" />}
+          {!collapsed && <span>{isDark ? 'Light Theme' : 'Theme Settings'}</span>}
         </button>
 
         <NavLink to="/help" className="sidebar-nav-item" title={collapsed ? 'Help' : undefined}>
@@ -141,8 +141,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
           <MessageSquare size={18} className="icon" />
           {!collapsed && <span>FAQ</span>}
         </NavLink>
-        <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: 'rgba(255,100,100,0.9)' }} title={collapsed ? 'Logout' : undefined} aria-label="Logout">
-          <LogOut size={18} className="icon" />
+        <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: 'calc(100% - 20px)', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: '#DC2626' }} title={collapsed ? 'Logout' : undefined} aria-label="Logout">
+          <LogOut size={18} className="icon" color="#DC2626" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
@@ -152,39 +152,39 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
   // Mobile drawer overlay
   const mobileDrawer = mobileOpen ? (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300 }} className="hide-desktop">
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(9, 34, 62, 0.45)', backdropFilter: 'blur(2px)' }} onClick={onClose} aria-hidden="true" />
-      <aside style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 'min(280px, 82vw)', background: 'var(--color-sidebar-bg)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }} aria-label="Mobile navigation">
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(3px)' }} onClick={onClose} aria-hidden="true" />
+      <aside style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 'min(280px, 82vw)', background: '#FFFFFF', borderRight: '1px solid #E5EAF2', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }} aria-label="Mobile navigation">
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid #E5EAF2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <p style={{ fontSize: '0.725rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 650 }}>
               {role === 'admin' ? 'Admin Panel' : role === 'officer' ? 'Officer Panel' : 'Citizen Portal'}
             </p>
-            <p style={{ fontWeight: 650, color: '#fff', fontSize: '0.9rem', marginTop: 2 }}>{typeof user?.name === 'string' ? user.name : 'User'}</p>
+            <p style={{ fontWeight: 750, color: '#172033', fontSize: '0.925rem', marginTop: 2 }}>{typeof user?.name === 'string' ? user.name : 'User'}</p>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close menu" style={{ color: 'rgba(255,255,255,0.85)', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close menu" style={{ color: '#64748B', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <nav style={{ flex: 1, padding: '10px 0', overflowY: 'auto' }}>
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} onClick={onClose} className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`} style={{ ...(item.accent ? { color: '#f5a623' } : {}), padding: '12px 18px', fontSize: '0.925rem' }}>
+            <NavLink key={item.to} to={item.to} onClick={onClose} className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`} style={{ ...(item.accent ? { background: '#FFF7ED', color: '#C2410C', border: '1px solid #FFEDD5', fontWeight: 600 } : {}), padding: '12px 18px', fontSize: '0.925rem' }}>
               <item.icon size={19} className="icon" />
               <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
-        <div style={{ padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ padding: '10px 0', borderTop: '1px solid #E5EAF2', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <button
             onClick={() => {
               toggleTheme();
               onClose();
             }}
             className="sidebar-nav-item"
-            style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#FDE047' : '#93C5FD', padding: '12px 18px', fontSize: '0.925rem' }}
+            style={{ width: 'calc(100% - 20px)', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: isDark ? '#D97706' : '#2563EB', padding: '12px 18px', fontSize: '0.925rem' }}
           >
-            {isDark ? <Sun size={19} className="icon" color="#FDE047" /> : <Moon size={19} className="icon" color="#93C5FD" />}
-            <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+            {isDark ? <Sun size={19} className="icon" color="#D97706" /> : <Moon size={19} className="icon" color="#2563EB" />}
+            <span>{isDark ? 'Switch to Light Theme' : 'Theme Settings'}</span>
           </button>
-          <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: '100%', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: 'rgba(255,120,120,0.95)', padding: '12px 18px', fontSize: '0.925rem' }}>
-            <LogOut size={19} className="icon" />
+          <button onClick={handleLogout} className="sidebar-nav-item" style={{ width: 'calc(100% - 20px)', border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', color: '#DC2626', padding: '12px 18px', fontSize: '0.925rem' }}>
+            <LogOut size={19} className="icon" color="#DC2626" />
             <span>Logout</span>
           </button>
         </div>

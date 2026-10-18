@@ -87,37 +87,38 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
         aria-hidden="true"
       />
 
-      {/* Top Government Information Bar */}
+      {/* Top Government Information Bar - Premium Light Theme */}
       <div
         style={{
-          background: '#09223e',
-          color: '#cbd5e1',
-          padding: '4px clamp(10px, 2.5vw, 20px)',
+          background: '#F8FAFC',
+          color: '#475569',
+          padding: '5px clamp(10px, 2.5vw, 20px)',
           fontSize: '0.75rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid #E5EAF2',
           gap: 8,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
-          <span style={{ fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{ fontWeight: 700, color: '#172033', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Government of Maharashtra
           </span>
-          <span className="hide-mobile" style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>
+          <span className="hide-mobile" style={{ color: '#64748B', whiteSpace: 'nowrap' }}>
             | महाराष्ट्र शासन
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Skip link */}
           <a
             href="#main-content"
             style={{
-              color: '#94a3b8',
+              color: '#64748B',
               textDecoration: 'none',
               fontSize: '0.75rem',
+              fontWeight: 500,
             }}
             className="hide-mobile"
           >
@@ -129,41 +130,42 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             onClick={() => setShowScreenReader(true)}
             className="hide-mobile"
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: '#f1f5f9',
+              background: '#FFFFFF',
+              border: '1px solid #E5EAF2',
+              color: '#334155',
               cursor: 'pointer',
               fontSize: '0.725rem',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5,
-              padding: '2px 8px',
-              borderRadius: 4,
+              padding: '3px 9px',
+              borderRadius: 6,
               transition: 'all 0.15s ease',
               fontWeight: 500,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#BFDBFE'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E5EAF2'; }}
             aria-label="Screen reader access and live read aloud tool"
             title="Screen Reader Access & Speech Synthesis"
           >
-            <Headphones size={12} color="#FF9933" />
+            <Headphones size={12} color="#F28C28" />
             <span>Screen Reader Access</span>
           </button>
 
-
           {/* Font Size Adjusters */}
-          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 4, padding: '1px 4px' }}>
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', border: '1px solid #E5EAF2', borderRadius: 6, padding: '1px 3px' }}>
             <button
               onClick={() => adjustFontSize(0)}
               style={{
-                background: fontSizeLevel === 0 ? 'rgba(255,255,255,0.25)' : 'transparent',
+                background: fontSizeLevel === 0 ? '#EFF6FF' : 'transparent',
                 border: 'none',
-                color: '#fff',
+                color: fontSizeLevel === 0 ? '#174EA6' : '#64748B',
                 fontSize: '0.7rem',
+                fontWeight: fontSizeLevel === 0 ? 700 : 500,
                 cursor: 'pointer',
-                padding: '2px 5px',
-                borderRadius: 2,
+                padding: '2px 6px',
+                borderRadius: 4,
               }}
               title="Decrease Font Size"
             >
@@ -172,14 +174,14 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             <button
               onClick={() => adjustFontSize(1)}
               style={{
-                background: fontSizeLevel === 1 ? 'rgba(255,255,255,0.25)' : 'transparent',
+                background: fontSizeLevel === 1 ? '#EFF6FF' : 'transparent',
                 border: 'none',
-                color: '#fff',
+                color: fontSizeLevel === 1 ? '#174EA6' : '#64748B',
                 fontSize: '0.75rem',
-                fontWeight: 600,
+                fontWeight: fontSizeLevel === 1 ? 700 : 500,
                 cursor: 'pointer',
-                padding: '2px 5px',
-                borderRadius: 2,
+                padding: '2px 6px',
+                borderRadius: 4,
               }}
               title="Normal Font Size"
             >
@@ -188,13 +190,14 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             <button
               onClick={() => adjustFontSize(2)}
               style={{
-                background: fontSizeLevel === 2 ? 'rgba(255,255,255,0.25)' : 'transparent',
+                background: fontSizeLevel === 2 ? '#EFF6FF' : 'transparent',
                 border: 'none',
-                color: '#fff',
+                color: fontSizeLevel === 2 ? '#174EA6' : '#64748B',
                 fontSize: '0.8rem',
+                fontWeight: fontSizeLevel === 2 ? 700 : 500,
                 cursor: 'pointer',
-                padding: '2px 5px',
-                borderRadius: 2,
+                padding: '2px 6px',
+                borderRadius: 4,
               }}
               title="Increase Font Size"
             >
@@ -206,13 +209,13 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
           <button
             onClick={toggleTheme}
             style={{
-              background: isDark ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255,255,255,0.12)',
-              border: isDark ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 4,
-              padding: '2px 8px',
-              color: isDark ? '#FDE047' : '#fff',
+              background: '#FFFFFF',
+              border: '1px solid #E5EAF2',
+              borderRadius: 6,
+              padding: '3px 9px',
+              color: '#334155',
               fontSize: '0.725rem',
-              fontWeight: 600,
+              fontWeight: 500,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -222,8 +225,8 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
             aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {isDark ? <Sun size={12} color="#FDE047" /> : <Moon size={12} color="#93C5FD" />}
-            <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+            {isDark ? <Sun size={12} color="#D97706" /> : <Moon size={12} color="#2563EB" />}
+            <span>{isDark ? 'Light Theme' : 'Theme'}</span>
           </button>
 
           {/* Language Selector */}
@@ -235,23 +238,24 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                 setShowNotif(false);
               }}
               style={{
-                background: 'rgba(255,255,255,0.12)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 4,
-                padding: '2px 8px',
-                color: '#fff',
+                background: '#FFFFFF',
+                border: '1px solid #E5EAF2',
+                borderRadius: 6,
+                padding: '3px 9px',
+                color: '#334155',
                 fontSize: '0.75rem',
+                fontWeight: 500,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 4,
+                gap: 5,
               }}
               aria-label="Select language"
               aria-expanded={showLang}
             >
-              <Globe size={12} />
+              <Globe size={12} color="#2563EB" />
               <span>{langOptions.find(l => l.code === i18n.language)?.label || 'English'}</span>
-              <ChevronDown size={11} />
+              <ChevronDown size={11} color="#64748B" />
             </button>
 
             {showLang && (
@@ -261,11 +265,11 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                   right: 0,
                   top: '100%',
                   marginTop: 4,
-                  background: '#fff',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 6,
-                  boxShadow: 'var(--shadow-md)',
-                  minWidth: 120,
+                  background: '#FFFFFF',
+                  border: '1px solid #E5EAF2',
+                  borderRadius: 8,
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04)',
+                  minWidth: 130,
                   zIndex: 250,
                   overflow: 'hidden',
                 }}
@@ -282,12 +286,12 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                       width: '100%',
                       textAlign: 'left',
                       padding: '8px 14px',
-                      background: i18n.language === lang.code ? '#e8f4fd' : 'none',
+                      background: i18n.language === lang.code ? '#EFF6FF' : 'none',
                       border: 'none',
                       cursor: 'pointer',
                       fontSize: '0.8125rem',
-                      color: i18n.language === lang.code ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                      fontWeight: i18n.language === lang.code ? 600 : 400,
+                      color: i18n.language === lang.code ? '#174EA6' : '#172033',
+                      fontWeight: i18n.language === lang.code ? 650 : 450,
                     }}
                   >
                     {lang.label}
@@ -405,12 +409,12 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                 to={link.to}
                 style={{
                   padding: '8px 14px',
-                  borderRadius: 6,
-                  color: isActive(link.to) ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderRadius: 8,
+                  color: isActive(link.to) ? '#174EA6' : '#475569',
                   fontWeight: isActive(link.to) ? 650 : 500,
                   fontSize: '0.875rem',
                   textDecoration: 'none',
-                  background: isActive(link.to) ? '#eef4fa' : 'transparent',
+                  background: isActive(link.to) ? '#EFF6FF' : 'transparent',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -423,7 +427,7 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
         <div style={{ flex: 1 }} />
 
         {/* Search Bar (Desktop) */}
-        <form onSubmit={handleSearchSubmit} className="search-box hide-mobile" style={{ width: 220, position: 'relative' }}>
+        <form onSubmit={handleSearchSubmit} className="search-box hide-mobile" style={{ width: 240, position: 'relative', background: '#FFFFFF', border: '1px solid #E5EAF2', borderRadius: 8 }}>
           <Search size={15} aria-hidden="true" style={{ color: 'var(--color-text-secondary)' }} />
           <input
             type="search"
@@ -644,24 +648,33 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
             <Link
               to="/login"
-              className="btn btn-outline btn-sm hide-mobile"
+              className="btn btn-sm hide-mobile"
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 padding: '7px 16px',
-                borderColor: 'var(--color-border-dark)',
+                background: '#FFFFFF',
+                color: '#174EA6',
+                border: '1.5px solid #E5EAF2',
+                borderRadius: 8,
+                transition: 'all 0.15s ease',
               }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#BFDBFE'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E5EAF2'; }}
             >
               Login
             </Link>
             <Link
               to="/login"
-              className="btn btn-outline btn-sm hide-desktop"
+              className="btn btn-sm hide-desktop"
               style={{
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 padding: '6px 12px',
-                borderColor: 'var(--color-border-dark)',
+                background: '#FFFFFF',
+                color: '#174EA6',
+                border: '1.5px solid #E5EAF2',
+                borderRadius: 8,
               }}
               aria-label="Login"
             >
@@ -674,11 +687,15 @@ export default function Header({ onMenuToggle, sidebarOpen }) {
                 fontSize: '0.85rem',
                 fontWeight: 650,
                 padding: '7px 18px',
-                background: 'var(--color-accent)',
+                background: '#2563EB',
                 color: '#fff',
                 border: 'none',
-                boxShadow: '0 2px 6px rgba(230,126,34,0.3)',
+                borderRadius: 8,
+                boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
+                transition: 'all 0.15s ease',
               }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1D4ED8'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#2563EB'; }}
             >
               Register
             </Link>
