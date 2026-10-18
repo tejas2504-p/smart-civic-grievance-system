@@ -439,13 +439,13 @@ export default function RegisterPage() {
                           type="tel"
                           maxLength={10}
                           className={`form-input${errors.mobile ? ' error' : ''}`}
-                          placeholder="8452940085"
+                          placeholder="9653260119"
                           style={{ borderRadius: '0 6px 6px 0' }}
                           {...register('mobile')}
                         />
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '4px 0 0' }}>
-                        Demo Mode: Real SMS OTP is restricted to <strong>+91 8452940085</strong>
+                        Demo Mode: Real SMS OTP is restricted to <strong>+91 9653260119</strong>
                       </p>
                     </Field>
 

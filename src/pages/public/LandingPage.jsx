@@ -443,7 +443,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(28px, 4vw, 48px) clamp(16px, 3vw, 24px)' }}>
+      <div className="landing-main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(28px, 4vw, 48px) clamp(16px, 3vw, 24px)' }}>
         {/* AI Natural Language Service Discovery Section */}
         <section aria-label="AI Service Discovery" style={{ marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
@@ -589,7 +589,7 @@ export default function LandingPage() {
             <span>Register a Complaint</span> <ChevronRight size={18} />
           </Link>
         </section>
-      </main>
+      </div>
 
       <PublicFooter user={user} role={role} />
     </div>

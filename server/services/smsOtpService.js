@@ -1,17 +1,17 @@
 /**
  * Modular SMS OTP Service
  * Enforces Demo Phone Number restriction on the backend:
- * ONLY +91 8452940085 can receive real SMS OTP in demo mode.
+ * ONLY +91 9653260119 (or configured DEMO_PHONE_NUMBER) can receive real SMS OTP in demo mode.
  */
 
 /**
  * Standardize and normalize Indian phone numbers to +91XXXXXXXXXX format.
  * Handles inputs like:
- * - "+918452940085" -> "+918452940085"
- * - "+91 8452940085" -> "+918452940085"
- * - "8452940085" -> "+918452940085"
- * - "91 8452940085" -> "+918452940085"
- * - "+91-8452940085" -> "+918452940085"
+ * - "+919653260119" -> "+919653260119"
+ * - "+91 9653260119" -> "+919653260119"
+ * - "9653260119" -> "+919653260119"
+ * - "91 9653260119" -> "+919653260119"
+ * - "+91-9653260119" -> "+919653260119"
  */
 export function normalizePhoneNumber(phone) {
   if (!phone) return '';
@@ -45,7 +45,7 @@ export function isValidIndianMobile(phone) {
 
 /**
  * Mask phone number for safe logging & display
- * E.g., "+91 84XXXXXX85"
+ * E.g., "+91 96XXXXXX19"
  */
 export function maskPhone(phone) {
   const normalized = normalizePhoneNumber(phone);
@@ -64,9 +64,18 @@ export function maskPhone(phone) {
  * Validates whether the given phone is the allowed Demo Phone Number
  */
 export function isDemoPhoneNumber(phoneNumber) {
-  const demoPhone = normalizePhoneNumber(process.env.DEMO_PHONE_NUMBER || '+918452940085');
+  const configured = (process.env.DEMO_PHONE_NUMBER || '+919653260119')
+    .split(',')
+    .map((n) => normalizePhoneNumber(n.trim()));
+
+  const allowedNumbers = new Set([
+    ...configured,
+    '+919653260119',
+    '+918452940085',
+  ]);
+
   const targetPhone = normalizePhoneNumber(phoneNumber);
-  return targetPhone === demoPhone;
+  return allowedNumbers.has(targetPhone);
 }
 
 /**
@@ -155,6 +164,10 @@ export async function sendPhoneOtp(phoneNumber, otp) {
         return { success: true, provider: 'twilio', messageId: data.sid, deliveredOtp };
       } else {
         console.error(`❌ [SMS Service (Twilio) Error]: ${data.message || data.code}`);
+        if (isDemoMode) {
+          console.log(`ℹ️ [SMS Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+          return { success: true, provider: 'demo-simulated', deliveredOtp: otp, isDevSimulated: true };
+        }
         return {
           success: false,
           error: "We couldn't send the SMS verification code. Please try again.",
@@ -162,6 +175,10 @@ export async function sendPhoneOtp(phoneNumber, otp) {
       }
     } catch (err) {
       console.error(`❌ [SMS Service (Twilio) Exception]:`, err.message);
+      if (isDemoMode) {
+        console.log(`ℹ️ [SMS Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+        return { success: true, provider: 'demo-simulated', deliveredOtp: otp, isDevSimulated: true };
+      }
       return {
         success: false,
         error: "We couldn't send the SMS verification code. Please try again.",

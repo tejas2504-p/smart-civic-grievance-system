@@ -28,6 +28,11 @@ export async function verifyCaptcha(token, remoteIp = null) {
 
   const cleanToken = token.trim();
 
+  // 0. Development / Test Token Bypass
+  if (process.env.NODE_ENV !== 'production' && (cleanToken === '1x0000000000000000000000000000000AA' || cleanToken === '1x00000000000000000000AA' || cleanToken === 'dev-bypass-token')) {
+    return { success: true, provider: 'dev-bypass' };
+  }
+
   // 1. Civic Security Code Verification (Signed HMAC Challenge)
   // Format: CIVIC_CAPTCHA:<userInputCode>:<hmac>:<timestamp>
   if (cleanToken.startsWith('CIVIC_CAPTCHA:')) {

@@ -419,10 +419,24 @@ export default function LoginPage() {
                           value={otpTarget}
                           onChange={e => setOtpTarget(e.target.value)}
                           className="form-input"
-                          placeholder={otpChannel === 'email' ? 'name@example.com' : '9876543210'}
+                          placeholder={otpChannel === 'email' ? 'name@example.com' : '9653260119'}
                           required
                           autoComplete="off"
                         />
+                        {otpChannel === 'mobile' && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              Demo Mobile: <strong>9653260119</strong>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setOtpTarget('9653260119')}
+                              style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.72rem', fontWeight: 650, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                            >
+                              Autofill
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Cloudflare Turnstile CAPTCHA */}
@@ -530,6 +544,8 @@ export default function LoginPage() {
                     setAuthMode('password');
                     setValue('credential', 'admin@gov.in');
                     setValue('password', 'Admin@123');
+                    setPasswordCaptchaToken('1x0000000000000000000000000000000AA');
+                    setPasswordCaptchaError('');
                   }}
                   style={{
                     padding: '8px',
@@ -553,6 +569,8 @@ export default function LoginPage() {
                     setAuthMode('password');
                     setValue('credential', 'officer@gov.in');
                     setValue('password', 'Officer@123');
+                    setPasswordCaptchaToken('1x0000000000000000000000000000000AA');
+                    setPasswordCaptchaError('');
                   }}
                   style={{
                     padding: '8px',
@@ -568,6 +586,31 @@ export default function LoginPage() {
                 >
                   <div style={{ fontWeight: 700, color: '#047857' }}>🛡️ Field Officer</div>
                   <div style={{ color: '#64748b', fontSize: '0.68rem' }}>officer@gov.in</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('otp');
+                    setOtpChannel('mobile');
+                    setOtpTarget('9653260119');
+                    setOtpCaptchaToken('1x0000000000000000000000000000000AA');
+                    setOtpCaptchaError('');
+                  }}
+                  style={{
+                    padding: '8px',
+                    borderRadius: 6,
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '0.72rem',
+                    color: '#0f172a',
+                    transition: 'border-color 0.15s',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#2563eb' }}>👤 Citizen (OTP)</div>
+                  <div style={{ color: '#64748b', fontSize: '0.68rem' }}>9653260119</div>
                 </button>
               </div>
             </div>

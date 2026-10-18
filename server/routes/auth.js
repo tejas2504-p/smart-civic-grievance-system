@@ -169,7 +169,7 @@ export function createAuthRouter(io) {
           if (!phone || !isValidIndianMobile(phone)) {
             return res.status(400).json({
               success: false,
-              message: 'Please provide a valid 10-digit Indian mobile number (e.g. 8452940085).',
+              message: 'Please provide a valid 10-digit Indian mobile number (e.g. 9653260119).',
             });
           }
 
@@ -186,7 +186,7 @@ export function createAuthRouter(io) {
           }
 
           // USER LOOKUP: Account MUST exist in MongoDB
-          const existingUser = await User.findOne({
+          let existingUser = await User.findOne({
             $or: [
               { phone: formattedPhone },
               { phone: rawDigits },
@@ -194,6 +194,26 @@ export function createAuthRouter(io) {
               { phone: `+91${rawDigits.slice(-10)}` },
             ],
           });
+
+          // In demo mode, if Demo Citizen is not yet bound to this demo phone, associate it automatically
+          if (!existingUser && isDemoMode && isDemoPhoneNumber(formattedPhone)) {
+            existingUser = await User.findOne({ email: 'demo.citizen@gov.in' });
+            if (existingUser) {
+              existingUser.phone = formattedPhone;
+              existingUser.phoneVerified = true;
+              await existingUser.save();
+            } else {
+              existingUser = await User.create({
+                name: 'Demo Citizen',
+                email: 'demo.citizen@gov.in',
+                phone: formattedPhone,
+                password: 'password123',
+                role: 'citizen',
+                emailVerified: true,
+                phoneVerified: true,
+              });
+            }
+          }
 
           if (!existingUser) {
             return res.status(404).json({
@@ -250,6 +270,7 @@ export function createAuthRouter(io) {
             verificationId,
             expiresIn: expiresInSeconds,
             phoneMasked: maskPhone(formattedPhone),
+            ...(smsResult?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devOtp: actualPhoneOtp, devPhoneOtp: actualPhoneOtp } : {}),
           });
         }
       }
@@ -262,7 +283,7 @@ export function createAuthRouter(io) {
       if (!phone || !isValidIndianMobile(phone)) {
         return res.status(400).json({
           success: false,
-          message: 'Please provide a valid 10-digit Indian mobile number (e.g. 8452940085).',
+          message: 'Please provide a valid 10-digit Indian mobile number (e.g. 9653260119).',
         });
       }
 
@@ -411,7 +432,9 @@ export function createAuthRouter(io) {
         expiresIn: expiresInSeconds,
         phoneMasked: maskPhone(formattedPhone),
         emailMasked: maskEmail(normalizedEmail),
-        ...(emailResult.value?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false' ? { devEmailOtp: emailOtp } : {}),
+        ...(emailResult.value?.isDevSimulated || process.env.OTP_DEMO_MODE !== 'false'
+          ? { devEmailOtp: emailOtp, devPhoneOtp: actualPhoneOtp, devOtp: actualPhoneOtp }
+          : {}),
         deliveryStatus: {
           sms: 'delivered',
           email: 'delivered',
@@ -894,7 +917,7 @@ export function createAuthRouter(io) {
       if (!isValidIndianMobile(phone)) {
         return res.status(400).json({
           success: false,
-          message: 'Please provide a valid 10-digit Indian mobile number (e.g. 8452940085).',
+          message: 'Please provide a valid 10-digit Indian mobile number (e.g. 9653260119).',
         });
       }
 

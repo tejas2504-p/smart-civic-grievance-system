@@ -18,7 +18,7 @@ export default function AppShell() {
         onMenuToggle={() => setMobileOpen(o => !o)}
         sidebarOpen={mobileOpen}
       />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: user ? 'hidden' : 'visible' }}>
         {user && (
           <Sidebar
             collapsed={sidebarCollapsed}
@@ -33,7 +33,7 @@ export default function AppShell() {
           tabIndex={-1}
           style={{
             flex: 1,
-            overflowY: 'auto',
+            overflowY: user ? 'auto' : 'visible',
             overflowX: 'hidden',
             padding: user ? 'clamp(12px, 2.5vw, 24px)' : '0',
             background: 'var(--color-bg)',

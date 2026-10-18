@@ -28,7 +28,7 @@ export async function autoSeedDefaultUsers() {
         {
           name: 'Demo Citizen',
           email: 'demo.citizen@gov.in',
-          phone: '+918452940085',
+          phone: '+919653260119',
           password: defaultPassword,
           role: 'citizen',
           emailVerified: true,
@@ -58,9 +58,17 @@ export async function autoSeedDefaultUsers() {
       ]);
 
       console.log('✅ [Database] Default users created:');
-      console.log('   👤 Citizen:  rajesh.kumar@email.com / password123 (or +918452940085)');
+      console.log('   👤 Citizen:  rajesh.kumar@email.com / password123 (or +919653260119)');
       console.log('   👮 Officer:  suresh.patil@gov.mh.in / password123');
       console.log('   👑 Admin:    priya.sharma@gov.mh.in / password123');
+    } else {
+      // Ensure Demo Citizen has the current demo phone number
+      const demoCitizen = await User.findOne({ email: 'demo.citizen@gov.in' });
+      if (demoCitizen && demoCitizen.phone !== '+919653260119') {
+        demoCitizen.phone = '+919653260119';
+        await demoCitizen.save();
+        console.log('🔄 [Database] Updated Demo Citizen phone number to +919653260119');
+      }
     }
 
     const deptCount = await Department.countDocuments();

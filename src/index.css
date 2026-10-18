@@ -1482,10 +1482,11 @@ body {
 /* Responsive Grids */
 .grid-responsive-hero {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 24px;
+  align-items: stretch;
 }
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .grid-responsive-hero {
     grid-template-columns: 1fr;
   }
