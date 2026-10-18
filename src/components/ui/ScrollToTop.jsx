@@ -68,10 +68,10 @@ export default function ScrollToTop() {
           width: '46px',
           height: '46px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #123B63 0%, #09223e 100%)',
+          background: 'linear-gradient(135deg, #174EA6 0%, #2563EB 100%)',
           color: '#ffffff',
-          border: '2px solid rgba(255, 153, 51, 0.8)', // Indian saffron accent border
-          boxShadow: '0 6px 18px rgba(9, 34, 62, 0.35)',
+          border: '2px solid rgba(242, 140, 40, 0.9)', // Indian saffron accent border
+          boxShadow: '0 6px 18px rgba(37, 99, 235, 0.35)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

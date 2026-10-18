@@ -85,7 +85,7 @@ export default function AIServiceSearch({ onSelectService, onAskAI, headerAction
         </div>
 
         <div style={{ textAlign: headerAction ? 'left' : 'center' }}>
-          <h2 style={{ fontSize: 'clamp(1.3rem, 3.5vw, 1.75rem)', fontWeight: 800, color: '#09223e', margin: '0 0 6px', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+          <h2 style={{ fontSize: 'clamp(1.3rem, 3.5vw, 1.75rem)', fontWeight: 800, color: '#172033', margin: '0 0 6px', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
             {currentLang === 'mr'
               ? 'आपल्याला कोणती शासकीय सेवा हवी आहे?'
               : currentLang === 'hi'
