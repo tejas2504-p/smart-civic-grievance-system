@@ -182,7 +182,7 @@ export default function ForgotPasswordPage() {
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 12, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
 
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #174EA6 0%, #1E40AF 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                 <Lock size={22} color="#fff" />
               </div>
