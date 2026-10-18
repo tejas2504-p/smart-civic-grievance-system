@@ -388,7 +388,7 @@ export default function RegisterPage() {
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 12, boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
 
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #174EA6 0%, #1E40AF 100%)', padding: 'clamp(18px, 3.5vw, 24px) clamp(12px, 3vw, 20px)', textAlign: 'center' }}>
               <img
                 src="/logo.jpg"
                 alt="Logo"

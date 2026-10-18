@@ -203,7 +203,7 @@ export default function AIGuidedJourney({ isOpen, onClose }) {
         {/* Modal Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #09223e 0%, #123B63 100%)',
+            background: 'linear-gradient(135deg, #174EA6 0%, #1E40AF 100%)',
             color: '#ffffff',
             padding: 'clamp(16px, 3vw, 22px) clamp(18px, 3.5vw, 28px)',
             display: 'flex',
