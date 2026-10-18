@@ -216,17 +216,32 @@ export async function sendPhoneOtp(phoneNumber, otp) {
 
       const data = await response.json();
       if (data.return === true) {
-        console.log(`📱 [SMS Service (Fast2SMS)] OTP SMS dispatched successfully to ${masked}`);
+        console.log(`📱 [SMS Service (Fast2SMS)] OTP SMS dispatched successfully to ${masked} [Request ID: ${data.request_id}]`);
         return { success: true, provider: 'fast2sms', messageId: data.request_id };
       } else {
-        console.error(`❌ [SMS Service (Fast2SMS) Error]:`, data.message);
+        const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : (data.message || 'SMS delivery failed');
+        console.error(`❌ [SMS Service (Fast2SMS) Error]:`, errorMsg);
+        if (isDemoMode) {
+          console.log(`ℹ️ [SMS Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+          return {
+            success: true,
+            provider: 'demo-simulated',
+            deliveredOtp: otp,
+            isDevSimulated: true,
+            warning: errorMsg,
+          };
+        }
         return {
           success: false,
-          error: "We couldn't send the SMS verification code. Please try again.",
+          error: errorMsg,
         };
       }
     } catch (err) {
       console.error(`❌ [SMS Service (Fast2SMS) Exception]:`, err.message);
+      if (isDemoMode) {
+        console.log(`ℹ️ [SMS Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+        return { success: true, provider: 'demo-simulated', deliveredOtp: otp, isDevSimulated: true };
+      }
       return {
         success: false,
         error: "We couldn't send the SMS verification code. Please try again.",

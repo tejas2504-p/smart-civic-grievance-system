@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
 /**
@@ -11,28 +12,17 @@ function maskEmail(email) {
 }
 
 /**
- * Dispatch Real Email OTP using Resend official Node.js SDK
+ * Dispatch Real Email OTP using Nodemailer SMTP (e.g. Gmail) or Resend SDK
  * @param {string} toEmail - Recipient email address
  * @param {string} otp - 6-digit cryptographically generated OTP
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string, isDevSimulated?: boolean, deliveredOtp?: string, devEmailOtp?: string}>}
  */
 export async function sendEmailOTP(toEmail, otp) {
   const cleanEmail = (toEmail || '').trim().toLowerCase();
   const masked = maskEmail(cleanEmail);
+  const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.OTP_DEMO_MODE !== 'false';
 
-  const apiKey = (process.env.RESEND_API_KEY || '').trim();
-  const fromEmail = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').trim();
-
-  if (!apiKey) {
-    console.error('❌ [Resend Email Service] RESEND_API_KEY is not configured in environment.');
-    return {
-      success: false,
-      error: "We couldn't send the email verification code. Please try again.",
-    };
-  }
-
-  const resend = new Resend(apiKey);
-  const subject = 'Verify your email address';
+  const subject = 'Verify your email address - Government Grievance Portal';
 
   const textBody = `
 Government of Maharashtra - Smart Grievance Redressal Portal
@@ -104,84 +94,140 @@ Security Warning: Government officials will never ask you for your verification 
 </html>
   `.trim();
 
-  try {
-    const response = await resend.emails.send({
-      from: fromEmail,
-      to: cleanEmail,
-      subject,
-      text: textBody,
-      html: htmlBody,
-    });
+  // 1. Try Nodemailer SMTP (configured in .env via SMTP_USER/SMTP_HOST)
+  if (process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
+        },
+      });
 
-    if (response.error) {
-      console.error(`❌ [Resend Email Service Error]: ${response.error.message || JSON.stringify(response.error)}`);
+      const fromAddress = process.env.EMAIL_FROM || `"Government Grievance Portal" <${process.env.SMTP_USER}>`;
 
-      // If Resend fails due to free sandbox tier restriction (can only send to account owner's email)
-      const errorMsg = response.error.message || '';
-      const isSandboxRestriction =
-        errorMsg.includes('only send testing emails') ||
-        errorMsg.includes('verify a domain') ||
-        response.error.statusCode === 403;
-      const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.OTP_DEMO_MODE !== 'false';
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: cleanEmail,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      });
 
-      if (isSandboxRestriction && isDevOrDemo) {
-        console.log(`
-  ===================================================================
-  📧 [DEV / DEMO MODE EMAIL OTP]
-  To: ${cleanEmail}
-  🔑 OTP Verification Code: ${otp}
-  ⚠️ Notice: Resend Sandbox (${fromEmail}) delivers only to sahilnarkar121105@gmail.com.
-  💡 Enter code [ ${otp} ] in the web portal to verify.
-  ===================================================================
-        `);
+      console.log(`📧 [Nodemailer SMTP] Verification OTP dispatched successfully to ${masked} [ID: ${info.messageId}]`);
+      console.log(`🔑 [Email OTP for ${cleanEmail}]: ${otp}`);
+      return {
+        success: true,
+        deliveredOtp: otp,
+        devEmailOtp: otp,
+        messageId: info.messageId,
+      };
+    } catch (smtpErr) {
+      console.error(`❌ [Nodemailer SMTP Error]: ${smtpErr.message}`);
+      if (isDevOrDemo) {
+        console.log(`ℹ️ [Email Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
         return {
           success: true,
           deliveredOtp: otp,
           isDevSimulated: true,
           devEmailOtp: otp,
-          messageId: 'dev_sandbox_' + Date.now(),
+          messageId: 'dev_smtp_fallback_' + Date.now(),
+        };
+      }
+      return {
+        success: false,
+        error: "We couldn't send the email verification code. Please check your email configuration.",
+      };
+    }
+  }
+
+  // 2. Try Resend if RESEND_API_KEY is configured
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+  if (resendApiKey) {
+    try {
+      const resend = new Resend(resendApiKey);
+      const fromEmail = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').trim();
+
+      const response = await resend.emails.send({
+        from: fromEmail,
+        to: cleanEmail,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      });
+
+      if (response.error) {
+        console.error(`❌ [Resend Email Error]: ${response.error.message || JSON.stringify(response.error)}`);
+        if (isDevOrDemo) {
+          console.log(`ℹ️ [Email Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+          return {
+            success: true,
+            deliveredOtp: otp,
+            isDevSimulated: true,
+            devEmailOtp: otp,
+            messageId: 'dev_resend_fallback_' + Date.now(),
+          };
+        }
+        return {
+          success: false,
+          error: response.error.message || "We couldn't send the email verification code. Please try again.",
         };
       }
 
+      console.log(`📧 [Resend Email Service] Verification OTP email dispatched successfully to ${masked} [ID: ${response.data?.id || 'sent'}]`);
+      console.log(`🔑 [Email OTP for ${cleanEmail}]: ${otp}`);
+      return {
+        success: true,
+        deliveredOtp: otp,
+        devEmailOtp: otp,
+        messageId: response.data?.id,
+      };
+    } catch (resendErr) {
+      console.error(`❌ [Resend Exception]: ${resendErr.message}`);
+      if (isDevOrDemo) {
+        console.log(`ℹ️ [Email Service] Demo mode active: Falling back to simulated delivery for ${masked} (OTP: ${otp})`);
+        return {
+          success: true,
+          deliveredOtp: otp,
+          isDevSimulated: true,
+          devEmailOtp: otp,
+          messageId: 'dev_resend_exception_' + Date.now(),
+        };
+      }
       return {
         success: false,
-        error: response.error.message || "We couldn't send the email verification code. Please try again.",
+        error: "We couldn't send the email verification code. Please try again.",
       };
     }
+  }
 
-    console.log(`📧 [Resend Email Service] Verification OTP email dispatched successfully to ${masked} [ID: ${response.data?.id || 'sent'}]`);
-    console.log(`🔑 [Email OTP for ${cleanEmail}]: ${otp}`);
-    return {
-      success: true,
-      deliveredOtp: otp,
-      devEmailOtp: otp,
-      messageId: response.data?.id,
-    };
-  } catch (error) {
-    console.error(`❌ [Resend Email Service Exception]: ${error.message}`);
-    const isDevOrDemo = process.env.NODE_ENV !== 'production' || process.env.OTP_DEMO_MODE !== 'false';
-    if (isDevOrDemo) {
-      console.log(`
+  // 3. Fallback for Dev/Demo if no provider configured
+  if (isDevOrDemo) {
+    console.log(`
   ===================================================================
-  📧 [DEV / DEMO MODE EMAIL OTP (Fallback)]
+  📧 [DEV / DEMO MODE EMAIL OTP (No Provider Configured)]
   To: ${cleanEmail}
   🔑 OTP Verification Code: ${otp}
   💡 Enter code [ ${otp} ] in the web portal to verify.
   ===================================================================
-      `);
-      return {
-        success: true,
-        deliveredOtp: otp,
-        isDevSimulated: true,
-        devEmailOtp: otp,
-        messageId: 'dev_fallback_' + Date.now(),
-      };
-    }
+    `);
     return {
-      success: false,
-      error: "We couldn't send the email verification code. Please try again.",
+      success: true,
+      deliveredOtp: otp,
+      isDevSimulated: true,
+      devEmailOtp: otp,
+      messageId: 'dev_simulated_' + Date.now(),
     };
   }
+
+  console.error('❌ [Email Service] No email provider configured (Neither SMTP nor RESEND_API_KEY).');
+  return {
+    success: false,
+    error: "We couldn't send the email verification code. Please try again.",
+  };
 }
 
 export default { sendEmailOTP };
