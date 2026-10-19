@@ -1,4 +1,14 @@
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api';
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return 'http://localhost:5000';
+};
+
+const API_URL = `${getApiBaseUrl()}/api`;
 
 async function fetchJSON(endpoint, options = {}) {
   const token = localStorage.getItem('auth_token');

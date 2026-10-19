@@ -1,6 +1,16 @@
 import { io } from 'socket.io-client';
 
-const SERVER_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return 'http://localhost:5000';
+};
+
+const SERVER_URL = getSocketUrl();
 
 let socket = null;
 
