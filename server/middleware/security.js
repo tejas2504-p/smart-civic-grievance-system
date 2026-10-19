@@ -20,17 +20,19 @@ export const helmetMiddleware = helmet({
       connectSrc: ["'self'", 'ws:', 'wss:', 'http:', 'https:'],
       frameAncestors: ["'self'"],
       objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+      upgradeInsecureRequests: isDev ? null : [],
     },
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   frameguard: { action: 'sameorigin' },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
+  hsts: isDev
+    ? false
+    : {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
   noSniff: true,
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 });
