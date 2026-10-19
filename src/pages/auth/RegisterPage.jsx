@@ -22,6 +22,7 @@ import { Spinner } from '../../components/ui/SharedComponents';
 import TurnstileCaptcha from '../../components/common/TurnstileCaptcha';
 import { api } from '../../lib/api';
 import { io } from 'socket.io-client';
+import { getSocketUrl } from '../../lib/socket';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters').max(100, 'Full name must not exceed 100 characters'),
@@ -126,7 +127,7 @@ export default function RegisterPage() {
 
   // Real-time Socket.IO listener for live verification status sync
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+    const socket = io(getSocketUrl(), {
       transports: ['websocket', 'polling'],
     });
     socketRef.current = socket;

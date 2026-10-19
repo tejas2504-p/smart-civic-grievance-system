@@ -1,8 +1,11 @@
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
   }
-  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost') {
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    if (window.location.protocol === 'https:') {
+      console.warn('[API Warning] VITE_API_URL is not set in your Vercel environment variables. API calls will fail without a deployed backend URL.');
+    }
     return `http://${window.location.hostname}:5000`;
   }
   return 'http://localhost:5000';
